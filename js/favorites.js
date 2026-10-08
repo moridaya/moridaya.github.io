@@ -1,7 +1,7 @@
 // Favorites: all-time favorites by category. Each category shows the current favorite
 // (name, optional photo, a one-line "why", since when) and what it replaced:
 // "previously: X, from [date] to [date]". Categories without a favorite are hidden.
-// Managed from the posting page (js/post-favorites.js).
+// Managed on this same page by the owner (js/favorites-manage.js).
 (function () {
   var M = window.Moridaya = window.Moridaya || {};
   var el = function () { return M.el.apply(null, arguments); };
@@ -57,6 +57,11 @@
     var out = document.getElementById('content');
     if (!out || document.body.getAttribute('data-page') !== 'favorites') return;
     if (!M.db) { out.textContent = 'Not connected to the database yet.'; return; }
+    // Called by js/favorites-manage.js after the owner changes something.
+    M.refreshFavorites = function () {
+      var c = M.ownerClient() || M.db;
+      M.withTimeout(M.fetchFavorites(c), 15000, 'favorites').then(function (data) { render(out, data); }, function () {});
+    };
     M.layered(M.fetchFavorites, function (data) { render(out, data); }, function () {
       out.textContent = '';
       out.appendChild(el('p', { class: 'note' }, ["Couldn't load favorites. (If this is new: run sql/004_favorites.sql in Supabase.)"]));

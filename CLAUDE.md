@@ -103,6 +103,7 @@ README.md has the setup steps and the entry field reference; this file has the r
 
 ## Design
 
+- Site subtitle is "a public diary & archive" (no name), and subtitles are not italic.
 - Old-internet look: white background, navy `#000080` headings and borders, default blue
   links `#0000ee`, purple visited. No gradients, no emoji, no modern "card" styling.
   Colors are CSS variables on `:root` with a dark set under `:root[data-theme="dark"]`.
@@ -147,8 +148,10 @@ README.md has the setup steps and the entry field reference; this file has the r
   place, emotion, word). A favorite = name, optional photo (600px/120 KB), one-line why,
   since date. The current one has empty `until`; `set_favorite()` closes the old one
   (until = new since) so history shows "previously: X, from A to B". Empty categories are
-  hidden on the public page. Managed in the Favorites box on the posting page
-  (`js/post-favorites.js`, which uses helpers post.js exposes as `M.post`).
+  hidden on the public page. **Favorites are not daily posts**: they're managed on the
+  favorites page itself, in a "Manage favorites" box that only appears for the logged-in
+  owner (`js/favorites-manage.js`, checks `is_owner()`). The posting page is for daily
+  entries only and just links there.
 - **Hobbies**: every tag with its count; `hobbies.html?tag=x` shows that tag's entries as a
   bento grid with dates (`showDate`). **Quotes**: every quote, newest first.
   **Bookshelf**: built from reading entries; same title (ignoring case) = one book;
