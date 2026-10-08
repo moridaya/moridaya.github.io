@@ -60,6 +60,7 @@
         f('title', 'book title'),
         f('author', 'author'),
         f('page', 'page I\'m on (optional)', 'number', { step: '1' }),
+        f('finished', 'finished this book', 'checkbox'),
         f('note', 'note')
       ],
       need: ['title']
@@ -77,7 +78,9 @@
       fields: [
         f('text', 'goal', 'textarea', { rows: 2 }),
         f('target_date', 'by when (optional)', 'date'),
-        f('done', 'done', 'checkbox')
+        f('done', 'done', 'checkbox'),
+        f('dropped', 'dropped (gave up on it)', 'checkbox'),
+        f('closed_on', 'date done or dropped (optional)', 'date')
       ],
       need: ['text']
     },
@@ -385,7 +388,10 @@
   }
 
   function explain(err) {
-    var msg = (err && (err.message || err.error_description || err.error)) || String(err);
+    var msg = (err && (err.message || err.error_description || err.error || err.msg)) ||
+      (err && (err.statusCode || err.status) ? 'the server answered ' + (err.statusCode || err.status) : '') ||
+      (typeof err === 'string' ? err : 'something went wrong');
+    if (typeof msg !== 'string') msg = 'something went wrong';
     if (/check constraint|is in the future|too far in the past/i.test(msg)) {
       return 'the database refused this entry: something required is missing, a number is out of range, ' +
         'or a text is too long.';
@@ -623,6 +629,7 @@
         'Run the site_owner line from the README (step 3) in the Supabase SQL editor.', 'error');
     }
     await loadRecent();
+    if (M.manageFavorites) M.manageFavorites();   // js/post-favorites.js
 
     // post.html?edit=123 opens that entry for editing
     var editId = new URLSearchParams(location.search).get('edit');
@@ -742,6 +749,17 @@
     status('Logged out.', 'ok');
     showForSession(null);
   }
+
+  // Shared with js/post-favorites.js.
+  M.post = {
+    db: function () { return db; },
+    status: status,
+    clearStatus: clearStatus,
+    upload: upload,
+    storagePath: storagePath,
+    removeFiles: removeFiles,
+    explain: explain
+  };
 
   // ---------- start ----------
 
