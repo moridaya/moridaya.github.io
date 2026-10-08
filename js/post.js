@@ -386,6 +386,10 @@
 
   function explain(err) {
     var msg = (err && (err.message || err.error_description || err.error)) || String(err);
+    if (/check constraint|is in the future|too far in the past/i.test(msg)) {
+      return 'the database refused this entry: something required is missing, a number is out of range, ' +
+        'or a text is too long.';
+    }
     if (/row-level security|violates|unauthorized|not allowed|403|PGRST116|0 rows/i.test(msg) || (err && err.code === 'PGRST116')) {
       return 'the database refused. Is this account added as the owner? (see README step 3)';
     }
