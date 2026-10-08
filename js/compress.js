@@ -37,13 +37,16 @@
     });
   }
 
-  // File -> Promise<Blob> (JPEG, about TARGET_BYTES or less)
-  M.compressImage = function (file) {
+  // File -> Promise<Blob> (JPEG, about TARGET_BYTES or less).
+  // opts can lower the limits, e.g. {maxSide: 600, targetBytes: 120 * 1024} for a song cover.
+  M.compressImage = function (file, opts) {
+    opts = opts || {};
+    var target = opts.targetBytes || TARGET_BYTES;
     return loadImage(file).then(function (img) {
-      var side = MAX_SIDE, quality = 0.85;
+      var side = opts.maxSide || MAX_SIDE, quality = 0.85;
       function attempt() {
         return toJpeg(img, side, quality).then(function (blob) {
-          if (blob.size <= TARGET_BYTES) return blob;
+          if (blob.size <= target) return blob;
           // Too big: lower the quality a bit first, then shrink the size.
           if (quality > 0.6) quality -= 0.1;
           else if (side > MIN_SIDE) { side = Math.round(side * 0.8); quality = 0.8; }

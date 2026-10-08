@@ -34,6 +34,7 @@
 
   // 'YYYY-MM-DD' -> 'Thursday, October 8, 2026'
   M.formatDate = function (dateStr, opts) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr))) return '';
     return new Intl.DateTimeFormat('en-US', Object.assign({
       timeZone: 'UTC', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     }, opts || {})).format(new Date(dateStr + 'T00:00:00Z'));

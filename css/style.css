@@ -207,6 +207,7 @@ img { max-width: 100%; height: auto; }
 /* ---------- timeline entries ---------- */
 
 .entry {
+  overflow-wrap: anywhere;   /* long links or words wrap instead of pushing the page sideways */
   padding: 8px 0 10px;
   border-bottom: 1px dotted var(--soft-rule);
 }
@@ -219,7 +220,16 @@ img { max-width: 100%; height: auto; }
 .entry p { margin: 2px 0 4px; white-space: pre-line; }
 .entry blockquote { margin: 4px 0 4px 16px; font-style: italic; white-space: pre-line; }
 .entry .media { margin-top: 6px; }
-.entry .media img { display: block; margin-bottom: 6px; border: 1px solid var(--soft-rule); }
+.entry .media a.zoom { display: inline-block; max-width: 100%; cursor: zoom-in; }
+/* Photos stay a sensible size in the timeline; click one to see it big. */
+.entry .media img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 360px;
+  margin-bottom: 6px;
+  border: 1px solid var(--soft-rule);
+}
 .entry .media audio { width: 100%; margin-bottom: 6px; }
 
 .entry iframe {
@@ -231,7 +241,8 @@ img { max-width: 100%; height: auto; }
 .entry iframe.video { aspect-ratio: 16 / 9; height: auto; }
 
 .song { display: flex; gap: 10px; align-items: center; }
-.song img { width: 64px; height: 64px; border: 1px solid var(--soft-rule); }
+.song a.cover { flex: 0 0 auto; cursor: zoom-in; }
+.song img { display: block; width: 80px; height: 80px; object-fit: cover; border: 1px solid var(--soft-rule); }
 
 .tags { margin-top: 4px; }
 
@@ -305,3 +316,42 @@ button.small { font-family: Verdana, Geneva, sans-serif; font-size: 11px; paddin
 
 ul.recent { margin: 0; padding-left: 18px; }
 ul.recent li { margin-bottom: 5px; }
+
+/* ---------- photo viewer (js/lightbox.js) ---------- */
+
+html.lightbox-open, html.lightbox-open body { overflow: hidden; }
+
+#lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 12px 12px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+#lightbox[hidden] { display: none; }
+#lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border: 2px solid #ffffff;
+  background: #ffffff;
+  cursor: default;
+}
+#lightbox .lightbox-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 12px;
+}
+
+img.qr { width: 180px; height: 180px; background: #ffffff; padding: 6px; border: 1px solid var(--navy); }
+code { font-family: "Courier New", Courier, monospace; word-break: break-all; }
