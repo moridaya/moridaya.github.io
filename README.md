@@ -77,6 +77,11 @@ and log in. Pick a type and the form changes to match. A few things to know:
 - **Times** (like fasting start/end) are always read as Manila time, even if
   your phone is set to another timezone.
 - **Tags** are lowercased, so `Running` and `running` are the same hobby.
+- **Songs**: start typing in "search a song" and pick a result; it fills in the title,
+  artist and cover. You can still type everything by hand.
+- **Weather**: the first time you open the posting page each day, it saves Manila's
+  weather for that day; it shows on that day's page.
+- **Favorites**: managed in the Favorites box near the bottom of the posting page.
 - **Recent posts** at the bottom let you edit or delete. Deleting an entry
   also deletes its photos.
 - Staying logged in on a device also shows your private entries on the home page.

@@ -158,6 +158,19 @@ README.md has the setup steps and the entry field reference; this file has the r
 - Phones (< 640px): header, title, ribbon, day counter and theme button are centered;
   entry text stays left-aligned.
 
+- **Song search** (`js/song-search.js`): on song entries, type to search the iTunes Search
+  API (`media=music&entity=song&country=PH`, no key, debounced 350 ms, newest search wins);
+  a pick fills title, artist and 600px album art (`/600x600bb.`). If iTunes can't be reached
+  the form says so and still works by hand. The CSP allows `itunes.apple.com` for this.
+- **Daily weather** (`M.saveTodayWeather` in `js/weather.js`): the owner's posting page
+  saves today's Open-Meteo forecast (high, low, condition) into `day_weather` once per day
+  if it's missing (`upsert ... ignoreDuplicates`). Only the owner writes weather, so
+  visitors can't fake it. The day page shows "Manila: high 32°C, light rain". Days he
+  doesn't open the posting page get no weather (they have no entries either).
+- **Favicon**: `favicon.svg` (navy square, white serif M) + `favicon.ico`, linked on every
+  page. **404**: `404.html`, old-web "Not Found ... Server at ... Port 443" style,
+  absolute paths (GitHub Pages serves it for any missing URL).
+
 ## Data
 
 - One table `entries` (see README "Entry fields" for each type's `data`), plus
@@ -169,8 +182,7 @@ README.md has the setup steps and the entry field reference; this file has the r
 ## Build order / what's left
 
 Done: 1 database, 2 home, 3 posting, 4 archive + day, favorites, hobbies, quotes,
-bookshelf, goals, about.
-Next: song search with the iTunes Search API (no key), auto-save Manila weather from
-Open-Meteo per day into `day_weather`. Random day: dropped.
+bookshelf, goals, about, song search, daily weather, favicon, 404. Random day: dropped.
+Left: [places] (still "soon").
 Later, not v1: weight graph, year-in-pixels mood grid, "changed my mind" log, letter to
 future self, RSS, search, places map.
