@@ -3,10 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Moridaya</title>
   <meta name="description" content="Moridaya: a public diary & archive of Deffoh.">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&amp;family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&amp;display=swap">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/theme.js"></script>
 </head>
@@ -34,22 +36,20 @@
     <p class="source note"></p>
   </section>
 
-  <div id="columns">
-    <aside id="left">
-      <section id="now" class="box" hidden>
-        <h2>Now</h2>
-        <table><tbody></tbody></table>
-      </section>
-      <section id="otd" class="box">
-        <h2>On this day</h2>
-        <div id="otd-list"><p class="note">loading...</p></div>
-      </section>
-    </aside>
+  <main id="today">
+    <h2 class="section-head">Today &middot; <span id="today-label"></span></h2>
+    <div id="bento"><p class="note">loading...</p></div>
+  </main>
 
-    <main id="right">
-      <h2>Today &middot; <span id="today-label"></span></h2>
-      <div id="timeline"><p class="note">loading...</p></div>
-    </main>
+  <div id="below">
+    <section id="now" class="box" hidden>
+      <h2>Now</h2>
+      <table><tbody></tbody></table>
+    </section>
+    <section id="otd" class="box">
+      <h2>On this day</h2>
+      <div id="otd-list"><p class="note">loading...</p></div>
+    </section>
   </div>
 
   <footer>
@@ -64,6 +64,7 @@
 <script src="js/db.js"></script>
 <script src="js/render.js"></script>
 <script src="js/lightbox.js"></script>
+<script src="js/bento.js"></script>
 <script src="js/ribbon.js"></script>
 <script src="js/weather.js"></script>
 <script src="js/counter.js"></script>

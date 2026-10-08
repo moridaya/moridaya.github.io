@@ -1,4 +1,4 @@
-// Home page: fills the header, quote of the day, NOW box, On this day, and today's timeline.
+// Home page: fills the header, quote of the day, NOW box, On this day, and today's bento grid.
 // Each part loads on its own, so one failing doesn't blank the whole page.
 (function () {
   var M = window.Moridaya = window.Moridaya || {};
@@ -169,15 +169,21 @@
     }).catch(failed(out, 'past years'));
   }
 
-  // ---------- today's timeline ----------
+  // ---------- today's entries (bento grid) ----------
 
   function loadTimeline(today) {
-    var out = $('timeline');
+    var out = $('bento');
     return M.db.from('entries').select('*').eq('entry_date', today)
       .order('created_at', { ascending: false })
       .then(rows)
       .then(function (entries) {
-        M.renderTimeline(out, entries, 'Nothing yet today. A new page, waiting.');
+        // The whole day as a bento grid that fits in one screen (3 rows).
+        M.renderBento(out, entries, {
+          maxRows: 3,
+          moreHref: M.dayUrl(today),
+          dayHref: function (e) { return M.dayUrl(e.entry_date); },
+          emptyText: 'Nothing yet today. A new page, waiting.'
+        });
       })
       .catch(failed(out, "today's entries"));
   }
@@ -197,7 +203,7 @@
         : 'Not connected to the database yet. Fill in js/config.js (see README).';
       notice.hidden = false;
       $('last-updated').textContent = '-';
-      $('timeline').textContent = '';
+      $('bento').textContent = '';
       $('otd-list').textContent = '';
       return;
     }
