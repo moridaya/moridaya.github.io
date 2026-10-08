@@ -91,6 +91,7 @@
   var removedMedia = [];     // storage paths to delete once the edit is saved
   var keptVoice = null;      // existing voice note path on the entry being edited
   var busy = false;
+  var dateTouched = false;   // false = the date box follows "today in Manila" by itself
 
   // ---------- small helpers ----------
 
@@ -199,9 +200,10 @@
   function showExistingMedia() {
     var box = $('existing-media');
     box.textContent = '';
-    keptMedia.forEach(function (path) {
+    keptMedia.forEach(function (path, i) {
+      // A small preview, never the file name.
       box.appendChild(el('div', { class: 'note existing' }, [
-        el('a', { href: M.mediaUrl(path), target: '_blank', rel: 'noopener' }, [path.split('/').pop()]),
+        el('img', { class: 'thumb', src: M.mediaUrl(path), alt: 'current photo ' + (i + 1) }),
         ' ',
         removeButton(function () {
           keptMedia = keptMedia.filter(function (p) { return p !== path; });
@@ -218,7 +220,7 @@
     box.textContent = '';
     if (!keptVoice) return;
     box.appendChild(el('div', { class: 'note existing' }, [
-      el('a', { href: M.mediaUrl(keptVoice), target: '_blank', rel: 'noopener' }, ['current voice note']),
+      'current voice note: ', el('audio', { controls: true, preload: 'none', src: M.mediaUrl(keptVoice) }),
       ' (choosing a new file replaces it) ',
       removeButton(function () { removedMedia.push(keptVoice); keptVoice = null; showExistingVoice(); })
     ]));
@@ -308,6 +310,9 @@
     clearStatus();
 
     var type = $('f-type').value;
+    // Left untouched, the date is "today in Manila" at the moment of saving, so a post
+    // made at 12:30 AM lands on the new day even if the page was opened before midnight.
+    if (!dateTouched && !editing) $('f-date').value = M.manilaDate();
     var date = $('f-date').value;
     var photos = Array.prototype.slice.call($('f-photos').files || []);
     var voiceInput = $('d-voice_note');
@@ -395,7 +400,8 @@
     removedMedia = [];
     keptVoice = null;
     var type = keepTypeAndDate ? $('f-type').value : 'thought';
-    var date = keepTypeAndDate ? $('f-date').value : M.manilaDate();
+    var date = keepTypeAndDate && dateTouched ? $('f-date').value : M.manilaDate();
+    if (!keepTypeAndDate) dateTouched = false;
     $('entry-form').reset();
     $('f-type').value = type;
     $('f-date').value = date;
@@ -753,6 +759,11 @@
     resetForm(false);
 
     $('entry-form').addEventListener('submit', save);
+    $('f-date').addEventListener('input', function () { dateTouched = $('f-date').value !== M.manilaDate(); });
+    // Keep an untouched date box on today's date, even across midnight.
+    setInterval(function () {
+      if (!dateTouched && !editing && $('f-date').value !== M.manilaDate()) $('f-date').value = M.manilaDate();
+    }, 20000);
     $('cancel-edit').addEventListener('click', function () { resetForm(false); clearStatus(); });
     $('login-form').addEventListener('submit', login);
     $('mfa-form').addEventListener('submit', verifyMfa);

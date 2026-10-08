@@ -30,9 +30,10 @@
   // Only allow real web links (no javascript: tricks).
   function safeUrl(u) { return typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null; }
 
+  // Link text is never a raw URL: without a title it shows the page or site name.
   function link(url, text) {
     var u = safeUrl(url);
-    return u ? el('a', { href: u, rel: 'noopener' }, [text || u]) : (text || null);
+    return u ? el('a', { href: u, rel: 'noopener' }, [has(text) ? text : decodeTitle(u)]) : (has(text) ? text : null);
   }
   M.link = link;
 
@@ -66,7 +67,7 @@
 
   var AUDIO_EXT = /\.(mp3|m4a|aac|ogg|oga|opus|wav|webm)(\?|$)/i;
 
-  function mediaItem(item) {
+  function mediaItem(item, caption, alt) {
     if (typeof item !== 'string' || !item) return null;
     var yt = youtubeId(item);
     if (yt) {
@@ -82,23 +83,41 @@
     var url = safeUrl(item) || M.mediaUrl(item);
     if (!url) return null;
     if (AUDIO_EXT.test(item)) return el('audio', { controls: true, preload: 'none', src: url });
-    return zoomable(url, '');
+    return zoomable(url, '', caption, alt);
   }
 
   // A picture that opens big in the viewer (js/lightbox.js) when clicked.
-  function zoomable(url, cls) {
-    return el('a', { href: url, class: 'zoom' + (cls ? ' ' + cls : '') }, [
-      el('img', { src: url, alt: '', loading: 'lazy' })
-    ]);
+  // It's a button, not a link, so the file's address never shows or opens in a new tab.
+  function zoomable(url, cls, caption, alt) {
+    var b = el('button', {
+      type: 'button',
+      class: 'zoom' + (cls ? ' ' + cls : ''),
+      'aria-label': 'enlarge photo' + (has(caption) ? ': ' + caption : '')
+    }, [el('img', { src: url, alt: has(alt) ? alt : (has(caption) ? caption : 'photo'), loading: 'lazy' })]);
+    if (has(caption)) b.setAttribute('data-caption', String(caption));
+    return b;
   }
 
   function isImagePath(item) {
     return typeof item === 'string' && !youtubeId(item) && !AUDIO_EXT.test(item) && !/^https?:/i.test(item);
   }
 
-  function mediaBlock(list) {
+  function mediaBlock(list, caption, alt) {
     if (!Array.isArray(list) || !list.length) return null;
-    return el('div', { class: 'media' }, list.map(mediaItem).filter(Boolean));
+    return el('div', { class: 'media' }, list.map(function (m) { return mediaItem(m, caption, alt); }).filter(Boolean));
+  }
+
+  // The words that go with an entry's photos: caption under the enlarged photo, and alt text.
+  function photoCaption(entry, d) {
+    var c = d.caption || (entry.type === 'food' ? d.text : null) ||
+      (entry.type === 'song' && has(d.title) ? d.title + (has(d.artist) ? ' \u2014 ' + d.artist : '') : null) ||
+      d.topic || d.text || null;
+    return has(c) ? String(c).replace(/\s+/g, ' ').slice(0, 300) : null;
+  }
+  function photoAlt(entry, caption) {
+    if (caption) return caption;
+    var day = M.formatDate(entry.entry_date, { weekday: undefined });
+    return entry.type + ' photo' + (day ? ' from ' + day : '');
   }
 
   // ---------- per-type bodies ----------
@@ -140,16 +159,21 @@
     list.forEach(function (step, i) {
       if (i) kids.push(' → ');
       if (typeof step === 'string') kids.push(safeUrl(step) ? link(step, decodeTitle(step)) : step);
-      else if (step) kids.push(link(step.url, step.title || step.url) || step.title || '');
+      else if (step) kids.push(link(step.url, step.title) || step.title || '');
     });
     return el('p', { class: 'note' }, kids);
   }
 
   // 'https://en.wikipedia.org/wiki/Opportunity_cost' -> 'Opportunity cost'
+  // any other link -> just the site name, e.g. 'investopedia.com'
   function decodeTitle(url) {
+    url = String(url);
     var m = /\/wiki\/([^?#]+)/.exec(url);
-    if (!m) return url;
-    try { return decodeURIComponent(m[1]).replace(/_/g, ' '); } catch (e) { return m[1]; }
+    if (m) {
+      try { return decodeURIComponent(m[1]).replace(/_/g, ' '); } catch (e) { return m[1].replace(/_/g, ' '); }
+    }
+    var host = /^https?:\/\/([^\/?#:]+)/i.exec(url);
+    return host ? host[1].replace(/^www\./i, '') : 'link';
   }
 
   var BODIES = {
@@ -175,7 +199,7 @@
       var title = has(d.title) ? d.title : 'untitled';
       var cover = songCover(d, entry);
       var line = el('div', { class: 'song' }, [
-        cover ? zoomable(cover, 'cover') : null,
+        cover ? zoomable(cover, 'cover', photoCaption(entry, d), 'album cover' + (has(d.title) ? ': ' + d.title : '')) : null,
         el('div', null, [el('b', null, [title]), has(d.artist) ? ' — ' + d.artist : null])
       ]);
       return [line, spotifyEmbed(d.spotify_url)];
@@ -255,14 +279,14 @@
         el('span', { class: 'kind' }, [entry.type]),
         entry.private ? el('span', { class: 'private' }, [' · private']) : null
       ])
-    ].concat(body, [mediaBlock(media), tagsLine(entry.tags)]));
+    ].concat(body, [mediaBlock(media, photoCaption(entry, d), photoAlt(entry, photoCaption(entry, d))), tagsLine(entry.tags)]));
   };
 
   // Fill a container with entries (already sorted by the caller).
   M.renderTimeline = function (container, entries, emptyText) {
     container.textContent = '';
     if (!entries.length) {
-      container.appendChild(el('p', { class: 'note' }, [emptyText || 'nothing posted.']));
+      container.appendChild(el('p', { class: 'empty' }, [emptyText || 'Nothing here.']));
       return;
     }
     entries.forEach(function (e) { container.appendChild(M.renderEntry(e)); });

@@ -17,15 +17,37 @@
       <button id="theme-toggle" type="button" aria-label="switch theme"></button>
     </div>
     <h1><a href="../index.html">Moridaya</a></h1>
-    <p class="subtitle">one day</p>
+    <p class="subtitle" id="day-title">&nbsp;</p>
+    <p class="meta" id="day-meta"></p>
   </header>
 
   <nav id="ribbon"></nav>
 
-  <p>Under construction. Check back soon.</p>
+  <div id="columns">
+    <aside id="left">
+      <section id="day-box" class="box">
+        <h2>This day</h2>
+        <table id="day-facts"><tbody></tbody></table>
+        <p id="day-nav" class="day-nav"></p>
+      </section>
+    </aside>
+
+    <main id="right">
+      <h2 id="day-heading">Entries</h2>
+      <div id="timeline"><p class="note">loading...</p></div>
+    </main>
+  </div>
+
+  <footer><a href="post.html">post</a></footer>
 
 </div>
 
+<script src="../js/vendor/supabase-2.45.4.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/render.js"></script>
+<script src="../js/lightbox.js"></script>
 <script src="../js/ribbon.js"></script>
+<script src="../js/day.js"></script>
 </body>
 </html>

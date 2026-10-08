@@ -24,6 +24,27 @@
     return parts.year + '-' + parts.month + '-' + parts.day;
   };
 
+  // Milliseconds until the next 12:00 AM in Manila. The Philippines is always UTC+8
+  // (no daylight saving), so this is plain arithmetic.
+  M.msUntilManilaMidnight = function (now) {
+    var DAY = 86400000, OFFSET = 8 * 3600000;
+    var t = (now === undefined ? Date.now() : now) + OFFSET;
+    return DAY - (t % DAY);
+  };
+
+  // Pages that show "today" call this: once Manila's date moves past `day`, the page
+  // reloads itself onto the new day. Timers can be late (sleeping laptop, background tab),
+  // so it also re-checks every 20 seconds and whenever the tab is looked at again.
+  M.reloadAtMidnight = function (day) {
+    function check() {
+      if (M.manilaDate() !== day) location.reload();
+    }
+    setTimeout(check, M.msUntilManilaMidnight() + 1000);
+    setInterval(check, 20000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+    window.addEventListener('focus', check);
+  };
+
   // 'YYYY-MM-DD' <-> whole-day arithmetic. Done in UTC so daylight saving never shifts a day.
   function dayNumber(dateStr) { return Math.round(Date.parse(dateStr + 'T00:00:00Z') / 86400000); }
   M.dayNumber = dayNumber;
