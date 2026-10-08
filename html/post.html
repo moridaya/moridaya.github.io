@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
   <title>post - Moridaya</title>
   <link rel="stylesheet" href="../css/style.css">
   <script src="../js/theme.js"></script>
@@ -20,10 +21,78 @@
 
   <nav id="ribbon"></nav>
 
-  <p>Under construction. Check back soon.</p>
+  <div id="status" class="notice" role="status" aria-live="polite" hidden></div>
+
+  <section id="login-box" class="box" hidden>
+    <h2>Log in</h2>
+    <form id="login-form" class="form">
+      <div class="field">
+        <label for="login-email">email</label>
+        <input type="email" id="login-email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="login-password">password</label>
+        <input type="password" id="login-password" autocomplete="current-password" required>
+      </div>
+      <p><button type="submit" id="login-button">log in</button></p>
+    </form>
+  </section>
+
+  <div id="editor" hidden>
+    <p class="meta">logged in as <span id="who"></span> &middot; <a href="#" id="logout">log out</a></p>
+
+    <section class="box">
+      <h2 id="form-title">New entry</h2>
+      <form id="entry-form" class="form" novalidate>
+        <div class="field">
+          <label for="f-type">type</label>
+          <select id="f-type"></select>
+        </div>
+        <div class="field">
+          <label for="f-date">date</label>
+          <input type="date" id="f-date" required>
+        </div>
+
+        <div id="type-fields"></div>
+
+        <div class="field">
+          <label for="f-photos" id="photos-label">photos (optional)</label>
+          <input type="file" id="f-photos" accept="image/*" multiple>
+          <div id="existing-media"></div>
+        </div>
+        <div class="field">
+          <label for="f-youtube">YouTube links (optional, one per line)</label>
+          <textarea id="f-youtube" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-tags">tags (comma separated, e.g. running, books)</label>
+          <input type="text" id="f-tags" autocomplete="off">
+        </div>
+        <div class="field check">
+          <label><input type="checkbox" id="f-private"> private (only you can see it)</label>
+        </div>
+
+        <p>
+          <button type="submit" id="save">post</button>
+          <button type="button" id="cancel-edit" hidden>cancel edit</button>
+        </p>
+      </form>
+    </section>
+
+    <section class="box">
+      <h2>Recent posts</h2>
+      <div id="recent"><p class="note">loading...</p></div>
+    </section>
+  </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/render.js"></script>
 <script src="../js/ribbon.js"></script>
+<script src="../js/compress.js"></script>
+<script src="../js/post.js"></script>
 </body>
 </html>

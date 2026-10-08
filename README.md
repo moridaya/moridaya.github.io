@@ -61,6 +61,21 @@ allow, which is reading non-private entries. **Never** put the
 
 Repo **Settings > Pages**: source "Deploy from a branch", branch `main`, folder `/ (root)`.
 
+## Posting
+
+Go to the small **post** link at the bottom of the home page (or `/html/post.html`)
+and log in. Pick a type and the form changes to match. A few things to know:
+
+- **Photos** are shrunk in your browser to about 300 KB before uploading, so
+  phone photos are fine. This also removes the hidden location data phones put in photos.
+- **Times** (like fasting start/end) are always read as Manila time, even if
+  your phone is set to another timezone.
+- **Tags** are lowercased, so `Running` and `running` are the same hobby.
+- **Recent posts** at the bottom let you edit or delete. Deleting an entry
+  also deletes its photos.
+- Staying logged in on a device also shows your private entries on the home page.
+  Log out on shared computers.
+
 ## Why the security works
 
 Anyone can read the JavaScript on a website, so a password check in JS would
