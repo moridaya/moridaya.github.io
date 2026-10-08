@@ -18,7 +18,9 @@
   <script defer src="../js/render.js"></script>
   <script defer src="../js/lightbox.js"></script>
   <script defer src="../js/ribbon.js"></script>
+  <script defer src="../js/compress.js"></script>
   <script defer src="../js/favorites.js"></script>
+  <script defer src="../js/favorites-manage.js"></script>
   <script src="../js/theme.js"></script>
 </head>
 <body data-root="../" data-page="favorites">
@@ -37,6 +39,44 @@
   <main id="content">
     <p class="note">loading...</p>
   </main>
+
+  <section class="box" id="fav-manager" hidden>
+    <h2>Manage favorites</h2>
+    <p class="note">Only you see this box. Changing a favorite keeps the old one as "previously".</p>
+    <div id="fav-status" class="notice" role="status" aria-live="polite" hidden></div>
+    <form id="fav-form" class="form">
+      <div class="field">
+        <label for="fav-cat">category</label>
+        <select id="fav-cat"></select>
+      </div>
+      <div class="field">
+        <label for="fav-name">new favorite</label>
+        <input type="text" id="fav-name" maxlength="200" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="fav-why">why (one line, optional)</label>
+        <input type="text" id="fav-why" maxlength="300" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="fav-since">my favorite since</label>
+        <input type="date" id="fav-since">
+      </div>
+      <div class="field">
+        <label for="fav-photo">photo (optional)</label>
+        <input type="file" id="fav-photo" accept="image/*">
+      </div>
+      <p><button type="submit" id="fav-save">set favorite</button>
+        <span class="note">the current one moves to "previously"</span></p>
+    </form>
+    <div id="fav-list"><p class="note">loading...</p></div>
+    <form id="fav-cat-form" class="form fav-cat-form">
+      <div class="field">
+        <label for="fav-new-cat">add a category</label>
+        <input type="text" id="fav-new-cat" maxlength="60" autocomplete="off">
+      </div>
+      <p><button type="submit">add category</button></p>
+    </form>
+  </section>
 
   <footer><a href="post.html">post</a></footer>
 

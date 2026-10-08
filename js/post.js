@@ -630,7 +630,6 @@
         'Run the site_owner line from the README (step 3) in the Supabase SQL editor.', 'error');
     }
     await loadRecent();
-    if (M.manageFavorites) M.manageFavorites();   // js/post-favorites.js
     if (M.saveTodayWeather) {   // js/weather.js: today's Manila weather for the day page
       M.saveTodayWeather(db).catch(function (err) { if (window.console) console.warn('weather', err); });
     }
@@ -753,17 +752,6 @@
     status('Logged out.', 'ok');
     showForSession(null);
   }
-
-  // Shared with js/post-favorites.js.
-  M.post = {
-    db: function () { return db; },
-    status: status,
-    clearStatus: clearStatus,
-    upload: upload,
-    storagePath: storagePath,
-    removeFiles: removeFiles,
-    explain: explain
-  };
 
   // ---------- start ----------
 
