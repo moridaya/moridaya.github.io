@@ -91,6 +91,8 @@
   var removedMedia = [];     // storage paths to delete once the edit is saved
   var keptVoice = null;      // existing voice note path on the entry being edited
   var busy = false;
+  // The logged-in connection (with time limits and the never-stuck login lock, see db.js).
+  var db = null;
   var dateTouched = false;   // false = the date box follows "today in Manila" by itself
 
   // ---------- small helpers ----------
@@ -134,7 +136,7 @@
   function storagePath(date, ext) { return date.replace(/-/g, '/') + '/' + randomName() + '.' + ext; }
 
   function upload(blob, path, contentType) {
-    return M.db.storage.from(M.MEDIA_BUCKET)
+    return db.storage.from(M.MEDIA_BUCKET)
       .upload(path, blob, { contentType: contentType, cacheControl: '31536000', upsert: false })
       .then(function (res) { if (res.error) throw res.error; return path; });
   }
@@ -142,7 +144,7 @@
   function removeFiles(paths) {
     paths = paths.filter(function (p) { return p && !isWebLink(p); });
     if (!paths.length) return Promise.resolve();
-    return M.db.storage.from(M.MEDIA_BUCKET).remove(paths).then(function (res) {
+    return db.storage.from(M.MEDIA_BUCKET).remove(paths).then(function (res) {
       if (res.error && window.console) console.error('cleanup', res.error);
     });
   }
@@ -364,8 +366,8 @@
         private: $('f-private').checked
       };
       var res = editing
-        ? await M.db.from('entries').update(row).eq('id', editing.id).select().single()
-        : await M.db.from('entries').insert(row).select().single();
+        ? await db.from('entries').update(row).eq('id', editing.id).select().single()
+        : await db.from('entries').insert(row).select().single();
       if (res.error) throw res.error;
 
       if (editing) await removeFiles(toRemove);
@@ -463,7 +465,7 @@
 
   function loadRecent() {
     var box = $('recent');
-    return M.db.from('entries').select('*').order('created_at', { ascending: false }).limit(20)
+    return db.from('entries').select('*').order('created_at', { ascending: false }).limit(20)
       .then(function (res) {
         if (res.error) throw res.error;
         box.textContent = '';
@@ -493,7 +495,7 @@
   async function removeEntry(entry) {
     var when = M.formatDate(entry.entry_date, { weekday: undefined, month: 'short' });
     if (!window.confirm('Delete this ' + entry.type + ' from ' + when + '? This can\'t be undone.')) return;
-    var res = await M.db.from('entries').delete().eq('id', entry.id).select();
+    var res = await db.from('entries').delete().eq('id', entry.id).select();
     if (res.error || !res.data || !res.data.length) {
       status('Not deleted: ' + explain(res.error || 'the database refused'), 'error');
       return;
@@ -595,7 +597,7 @@
     if (!session) { show('login'); enforceLock(); return; }
 
     // Password was right; if 2-step login is on, the code is still needed.
-    var aal = await M.db.auth.mfa.getAuthenticatorAssuranceLevel();
+    var aal = await db.auth.mfa.getAuthenticatorAssuranceLevel();
     var level = aal.data || {};
     if (level.nextLevel === 'aal2' && level.currentLevel !== 'aal2') {
       show('mfa');
@@ -611,7 +613,7 @@
     $('mfa-off').hidden = false;
     $('mfa-enroll').hidden = true;
 
-    var owner = await M.db.rpc('is_owner');
+    var owner = await db.rpc('is_owner');
     if (owner.data === false) {
       status('You\'re logged in, but this account isn\'t marked as the owner yet, so saving will be refused. ' +
         'Run the site_owner line from the README (step 3) in the Supabase SQL editor.', 'error');
@@ -621,7 +623,7 @@
     // post.html?edit=123 opens that entry for editing
     var editId = new URLSearchParams(location.search).get('edit');
     if (editId && /^\d+$/.test(editId)) {
-      var one = await M.db.from('entries').select('*').eq('id', editId).maybeSingle();
+      var one = await db.from('entries').select('*').eq('id', editId).maybeSingle();
       if (one.data) startEdit(one.data);
     }
   }
@@ -633,7 +635,7 @@
     var btn = $('login-button');
     btn.disabled = true;
     btn.textContent = 'logging in...';
-    var res = await M.db.auth.signInWithPassword({
+    var res = await db.auth.signInWithPassword({
       email: $('login-email').value.trim(),
       password: $('login-password').value
     });
@@ -647,7 +649,7 @@
       return;
     }
     // Only a right password AND (if on) a right code counts as a success; see verifyMfa.
-    var aal = await M.db.auth.mfa.getAuthenticatorAssuranceLevel();
+    var aal = await db.auth.mfa.getAuthenticatorAssuranceLevel();
     if (!(aal.data && aal.data.nextLevel === 'aal2' && aal.data.currentLevel !== 'aal2')) recordSuccess();
     showForSession(res.data.session);
   }
@@ -660,10 +662,10 @@
     var code = $('mfa-code').value.replace(/\s/g, '');
     if (!/^\d{6}$/.test(code)) { status('The code is 6 digits.', 'error'); return; }
     $('mfa-button').disabled = true;
-    var factors = await M.db.auth.mfa.listFactors();
+    var factors = await db.auth.mfa.listFactors();
     var totp = factors.data && factors.data.totp && factors.data.totp[0];
     var res = totp
-      ? await M.db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: code })
+      ? await db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: code })
       : { error: { message: 'no authenticator set up' } };
     $('mfa-button').disabled = false;
     $('mfa-code').value = '';
@@ -673,7 +675,7 @@
       return;
     }
     recordSuccess();
-    var s = await M.db.auth.getSession();
+    var s = await db.auth.getSession();
     showForSession(s.data.session);
   }
 
@@ -685,11 +687,11 @@
     clearStatus();
     $('mfa-start').disabled = true;
     // Clear out any half-finished setup from before.
-    var existing = await M.db.auth.mfa.listFactors();
+    var existing = await db.auth.mfa.listFactors();
     var leftovers = ((existing.data && existing.data.all) || []).filter(function (f) { return f.status !== 'verified'; });
-    for (var i = 0; i < leftovers.length; i++) await M.db.auth.mfa.unenroll({ factorId: leftovers[i].id });
+    for (var i = 0; i < leftovers.length; i++) await db.auth.mfa.unenroll({ factorId: leftovers[i].id });
 
-    var res = await M.db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Moridaya ' + Date.now() });
+    var res = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Moridaya ' + Date.now() });
     $('mfa-start').disabled = false;
     if (res.error) { status("Couldn't start 2-step setup: " + explain(res.error), 'error'); return; }
     enrolling = res.data.id;
@@ -706,20 +708,20 @@
     var code = $('mfa-enroll-code').value.replace(/\s/g, '');
     if (!/^\d{6}$/.test(code)) { status('The code is 6 digits.', 'error'); return; }
     $('mfa-enroll-button').disabled = true;
-    var res = await M.db.auth.mfa.challengeAndVerify({ factorId: enrolling, code: code });
+    var res = await db.auth.mfa.challengeAndVerify({ factorId: enrolling, code: code });
     $('mfa-enroll-button').disabled = false;
     if (res.error) { status('That code didn\'t match. Codes change every 30 seconds; try the current one.', 'error'); return; }
     enrolling = null;
     $('mfa-qr').removeAttribute('src');
     $('mfa-secret').textContent = '';
-    var s = await M.db.auth.getSession();
+    var s = await db.auth.getSession();
     await showForSession(s.data.session);
     status('2-step login is on. From now on, logging in needs your password and a code from the app. ' +
       'Keep the app on your phone; if you lose it, see "Lost your phone" in the README.', 'ok');
   }
 
   async function cancelEnroll() {
-    if (enrolling) await M.db.auth.mfa.unenroll({ factorId: enrolling });
+    if (enrolling) await db.auth.mfa.unenroll({ factorId: enrolling });
     enrolling = null;
     $('mfa-qr').removeAttribute('src');
     $('mfa-secret').textContent = '';
@@ -731,7 +733,7 @@
   async function logout(event) {
     if (event) event.preventDefault();
     if (enrolling) await cancelEnroll();
-    await M.db.auth.signOut();
+    await db.auth.signOut();
     resetForm(false);
     status('Logged out.', 'ok');
     showForSession(null);
@@ -753,6 +755,8 @@
       return;
     }
 
+    db = M.authClient();
+
     var select = $('f-type');
     Object.keys(TYPES).forEach(function (t) { select.appendChild(el('option', { value: t }, [t])); });
     select.addEventListener('change', function () { buildTypeFields(select.value); });
@@ -773,6 +777,12 @@
     $('mfa-enroll-cancel').addEventListener('click', cancelEnroll);
     $('logout').addEventListener('click', logout);
 
-    M.db.auth.getSession().then(function (res) { showForSession(res.data.session); });
+    M.withTimeout(db.auth.getSession(), 15000, 'login check')
+      .then(function (res) { return showForSession(res.data.session); })
+      .catch(function (err) {
+        if (window.console) console.warn(err);
+        status("Couldn't check your login in time. Log in below (or refresh).", 'error');
+        showForSession(null);
+      });
   });
 })();

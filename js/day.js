@@ -55,47 +55,53 @@
     }
     if (!M.db) { message('Not connected to the database yet.'); return; }
 
+    // Each piece loads on its own (cache -> public -> logged-in), so one slow piece
+    // never holds up the others and nothing can hang.
+    var facts = { chapter: null, weather: null, entries: null };
+    function showFacts() {
+      var box = $('day-facts');
+      box.textContent = '';
+      ['chapter', 'weather', 'entries'].forEach(function (k) { if (facts[k] !== null) fact(k, facts[k]); });
+    }
+
     // Chapter number and previous/next day, from the list of dates with entries.
-    var datesP = M.db.rpc('entry_dates').then(function (res) {
-      if (res.error) throw res.error;
-      var days = (res.data || []).map(function (r) { return r.day; }).filter(isRealDate);   // newest first
+    M.layered(function (c) { return c.rpc('entry_dates').then(M.rows); }, function (rows) {
+      var days = (rows || []).map(function (r) { return r.day; }).filter(isRealDate);   // newest first
       if (days.length) {
         var first = days[days.length - 1];
-        if (date >= first) fact('chapter', pad(M.daysBetween(first, date) + 1, 4));
+        facts.chapter = date >= first ? pad(M.daysBetween(first, date) + 1, 4) : null;
+        showFacts();
       }
       var older = days.filter(function (d) { return d < date; })[0] || null;
       var newer = days.filter(function (d) { return d > date; }).pop() || null;
       var nav = $('day-nav');
       nav.textContent = '';
-      nav.appendChild(navLink(older, '« previous day'));
-      nav.appendChild(document.createTextNode(' · '));
+      nav.appendChild(navLink(older, '\u00AB previous day'));
+      nav.appendChild(document.createTextNode(' \u00B7 '));
       nav.appendChild(el('a', { href: M.root() + 'html/archive.html' }, ['archive']));
-      nav.appendChild(document.createTextNode(' · '));
-      nav.appendChild(navLink(newer, 'next day »'));
-    }).catch(function (err) { if (window.console) console.error('dates', err); });
+      nav.appendChild(document.createTextNode(' \u00B7 '));
+      nav.appendChild(navLink(newer, 'next day \u00BB'));
+    }, null, 'archive:dates');
 
-    // Weather saved for that day, if any.
-    var weatherP = M.db.from('day_weather').select('summary, temp_c').eq('weather_date', date).maybeSingle()
+    // Weather saved for that day, if any (public data).
+    M.withTimeout(M.db.from('day_weather').select('summary, temp_c').eq('weather_date', date).maybeSingle(), 12000, 'weather')
       .then(function (res) {
-        var w = res.data;
-        if (w && (w.summary || w.temp_c !== null)) {
-          return 'Manila: ' + (w.temp_c !== null && w.temp_c !== undefined ? Math.round(w.temp_c) + '°C' : '') +
-            (w.summary ? (w.temp_c !== null && w.temp_c !== undefined ? ', ' : '') + w.summary : '');
+        var w = res && res.data;
+        var hasTemp = w && w.temp_c !== null && w.temp_c !== undefined;
+        if (w && (w.summary || hasTemp)) {
+          facts.weather = 'Manila: ' + (hasTemp ? Math.round(w.temp_c) + '\u00B0C' : '') +
+            (w.summary ? (hasTemp ? ', ' : '') + w.summary : '');
+          showFacts();
         }
-        return null;
-      }).catch(function () { return null; });
+      }).catch(function () { /* weather is a nice-to-have */ });
 
-    var entriesP = M.db.from('entries').select('*').eq('entry_date', date)
-      .order('created_at', { ascending: false })
-      .then(function (res) {
-        if (res.error) throw res.error;
-        return res.data || [];
-      });
-
-    Promise.all([datesP, weatherP, entriesP]).then(function (r) {
-      var weather = r[1], entries = r[2];
-      if (weather) fact('weather', weather);
-      fact('entries', String(entries.length));
+    // The entries themselves.
+    M.layered(function (c) {
+      return c.from('entries').select('id, created_at, entry_date, type, tags, data, media, private')
+        .eq('entry_date', date).order('created_at', { ascending: false }).then(M.rows);
+    }, function (entries) {
+      facts.entries = String(entries.length);
+      showFacts();
       // Same bento grid as the home page, but with every entry and tiles that grow to fit.
       M.renderBento($('bento'), entries, {
         emptyText: date === today ? 'Nothing yet today. A new page, waiting.' : 'Nothing was written on this day.'
@@ -104,9 +110,8 @@
         var target = document.getElementById(location.hash.slice(1));
         if (target) target.scrollIntoView({ block: 'center' });
       }
-    }).catch(function (err) {
-      if (window.console) console.error('day', err);
-      message("Couldn't load this day. Try refreshing.");
-    });
+    }, function () {
+      message("Couldn't load this day. Check your connection and refresh.");
+    }, 'day:' + date);
   });
 })();

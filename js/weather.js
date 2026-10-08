@@ -20,7 +20,7 @@
 
   // Resolves to the raw Open-Meteo reply.
   M.fetchWeather = function () {
-    return fetch(M.WEATHER_URL).then(function (r) {
+    return (M.fetch || fetch)(M.WEATHER_URL).then(function (r) {
       if (!r.ok) throw new Error('weather ' + r.status);
       return r.json();
     });
