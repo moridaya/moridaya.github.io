@@ -192,10 +192,15 @@ img { max-width: 100%; height: auto; }
 @media (max-width: 640px) {
   #below { flex-direction: column; gap: 0; }
   #below > .box { width: 100%; box-sizing: border-box; }
-  #top { padding-right: 0; }
-  #top-right { position: static; text-align: left; margin-bottom: 6px; display: flex; gap: 12px; align-items: center; }
+  /* Phones: header, title, menu, day counter and dark-mode button centered;
+     entry text stays left-aligned for reading. */
+  #top { padding-right: 0; text-align: center; }
+  #top-right { position: static; margin: 0 0 6px; display: flex; justify-content: center; gap: 12px; align-items: center; }
   #day-counter { margin-top: 0; }
   #top h1 { font-size: 32px; }
+  #ribbon { text-align: center; }
+  .section-head { text-align: center; }
+  .day-box { justify-content: center; text-align: center; }
 }
 
 /* NOW box */
