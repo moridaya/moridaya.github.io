@@ -45,8 +45,26 @@ README.md has the setup steps and the entry field reference; this file has the r
   private read goes through it.
 - Never insert user content as HTML. Build DOM with `M.el()` / `textContent`; links only via
   `M.link()` (http/https only). No `innerHTML`, no inline scripts, no inline `style=""`.
-- Every page carries the same Content Security Policy `<meta>`. If a page needs a new
-  outside host, add it to the CSP on every page and say why.
+- Every page carries the same Content Security Policy `<meta>` (scripts/styles/fonts only
+  from this site; network only to Supabase, Open-Meteo, iTunes; frames only YouTube-nocookie
+  and Spotify; no workers; upgrade-insecure-requests). If a page needs a new outside host,
+  add it to the CSP on every page and say why.
+- No third-party scripts. The vendored Supabase library is loaded with Subresource Integrity
+  (`integrity="sha384-..."`); if it's ever replaced, update the hash on every page (command in
+  `js/vendor/README.md`).
+- The database refuses bad data by itself (`sql/003_hardening.sql`): each type's required
+  fields, text/number/link limits, valid media paths and tags, no future `entry_date`, and
+  `created_at` set by the server (can't be faked). Keep the posting form's `need` rules and
+  these database rules in sync when adding a type or field.
+- `site_owner` and `site_stats` are unreachable from the API (RLS on, no rules, privileges
+  revoked). Only `bump_visits()` / `get_visits()` touch the counter.
+- Errors: every page part ends in data or a short message; unhandled errors are logged
+  quietly (`js/db.js` safety nets), and leftover "loading..." text is replaced after 20 s.
+- Keep-alive: `.github/workflows/keep-alive.yml` pings Supabase every 3 days with the public
+  anon key read from `js/config.js` (no secrets, no third-party actions).
+- Secrets audit (all files + full git history): only the anon key was ever committed. His
+  email appears only in commit author info from GitHub-website commits (fix: GitHub >
+  Settings > Emails > "Keep my email addresses private").
 - Photos are `<button class="zoom">` around an `<img>`, never links to the storage file.
   Never show file names, storage paths or raw URLs in the UI. Link text without a title
   falls back to the Wikipedia title or the site name.
