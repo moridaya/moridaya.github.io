@@ -191,7 +191,8 @@
       }
     });
     var needsPhoto = TYPES[type].need.some(function (n) { return n === '@photos'; });
-    $('photos-label').textContent = needsPhoto ? 'photos' : 'photos (optional)';
+    $('photos-label').textContent = needsPhoto ? 'photos'
+      : type === 'song' ? 'album cover picture (optional, shown small)' : 'photos (optional)';
     showExistingVoice();
   }
 
@@ -328,7 +329,8 @@
     try {
       for (var i = 0; i < photos.length; i++) {
         setBusy(true, 'photo ' + (i + 1) + ' of ' + photos.length + '...');
-        var blob = await M.compressImage(photos[i]);
+        // Song covers are only shown small, so they're saved smaller too.
+        var blob = await M.compressImage(photos[i], type === 'song' ? { maxSide: 600, targetBytes: 120 * 1024 } : null);
         uploaded.push(await upload(blob, storagePath(date, 'jpg'), 'image/jpeg'));
       }
       var data = read.data;
@@ -496,17 +498,112 @@
     loadRecent();
   }
 
+  // ---------- wrong-password lockout ----------
+  //
+  // After 3 wrong tries (password or 2-step code) this browser waits 15 minutes, then 30, 1 h, ...
+  // up to 8 h. It's a speed bump for someone at your keyboard; the real limits are on
+  // Supabase's side (its own rate limits, plus 2-step login), which nobody can switch off
+  // from the browser.
+
+  var GUARD_KEY = 'moridaya-login-guard';
+  var MAX_TRIES = 3;
+  var FIRST_LOCK_MIN = 15;
+  var MAX_LEVEL = 6;   // 15 min * 2^5 = 8 h
+  var memoryGuard = { fails: 0, until: 0, level: 0 };
+  var lockTimer = null;
+
+  function readGuard() {
+    try {
+      var g = JSON.parse(localStorage.getItem(GUARD_KEY));
+      if (g && typeof g.fails === 'number' && typeof g.until === 'number' && typeof g.level === 'number') return g;
+    } catch (e) { /* storage blocked or junk: use the in-memory copy */ }
+    return memoryGuard;
+  }
+  function writeGuard(g) {
+    memoryGuard = g;
+    try { localStorage.setItem(GUARD_KEY, JSON.stringify(g)); } catch (e) { /* in-memory still works */ }
+  }
+
+  function lockedMs() { return Math.max(0, readGuard().until - Date.now()); }
+
+  // Returns how many tries are left before the next lock (0 = just locked).
+  function recordFailure() {
+    var g = readGuard();
+    g.fails += 1;
+    if (g.fails >= MAX_TRIES) {
+      g.level = Math.min(g.level + 1, MAX_LEVEL);
+      g.until = Date.now() + FIRST_LOCK_MIN * 60000 * Math.pow(2, g.level - 1);
+      g.fails = 0;
+      writeGuard(g);
+      return 0;
+    }
+    writeGuard(g);
+    return MAX_TRIES - g.fails;
+  }
+  function recordSuccess() { writeGuard({ fails: 0, until: 0, level: 0 }); }
+
+  function setLoginInputs(disabled) {
+    ['login-email', 'login-password', 'login-button', 'mfa-code', 'mfa-button'].forEach(function (id) {
+      $(id).disabled = disabled;
+    });
+  }
+
+  // Shows a countdown and keeps the login buttons off while locked. Returns true if locked.
+  function enforceLock() {
+    if (lockTimer) { clearInterval(lockTimer); lockTimer = null; }
+    function tick() {
+      var ms = lockedMs();
+      if (ms <= 0) {
+        clearInterval(lockTimer); lockTimer = null;
+        setLoginInputs(false);
+        clearStatus();
+        return;
+      }
+      var mins = Math.floor(ms / 60000), secs = Math.floor((ms % 60000) / 1000);
+      setLoginInputs(true);
+      status('Too many wrong tries. Login is locked on this device for ' + mins + ':' + (secs < 10 ? '0' : '') + secs + '.', 'error');
+    }
+    if (lockedMs() > 0) { tick(); lockTimer = setInterval(tick, 1000); return true; }
+    return false;
+  }
+
+  function failMessage(what) {
+    var left = recordFailure();
+    if (left === 0) enforceLock();
+    else status('Wrong ' + what + '. ' + left + (left === 1 ? ' try' : ' tries') + ' left before login locks.', 'error');
+  }
+
+  function isRateLimited(err) {
+    return Boolean(err && (err.status === 429 || /rate limit|too many/i.test(err.message || '')));
+  }
+
   // ---------- login ----------
 
+  function show(view) {
+    $('login-box').hidden = view !== 'login';
+    $('mfa-box').hidden = view !== 'mfa';
+    $('editor').hidden = view !== 'editor';
+  }
+
   async function showForSession(session) {
-    if (!session) {
-      $('editor').hidden = true;
-      $('login-box').hidden = false;
+    if (!session) { show('login'); enforceLock(); return; }
+
+    // Password was right; if 2-step login is on, the code is still needed.
+    var aal = await M.db.auth.mfa.getAuthenticatorAssuranceLevel();
+    var level = aal.data || {};
+    if (level.nextLevel === 'aal2' && level.currentLevel !== 'aal2') {
+      show('mfa');
+      $('mfa-code').value = '';
+      if (!enforceLock()) $('mfa-code').focus();
       return;
     }
-    $('login-box').hidden = true;
-    $('editor').hidden = false;
+
+    show('editor');
     $('who').textContent = session.user.email;
+    $('mfa-state').textContent = level.currentLevel === 'aal2' ? 'on' : 'off';
+    $('mfa-setup').hidden = level.currentLevel === 'aal2';
+    $('mfa-off').hidden = false;
+    $('mfa-enroll').hidden = true;
 
     var owner = await M.db.rpc('is_owner');
     if (owner.data === false) {
@@ -517,7 +614,7 @@
 
     // post.html?edit=123 opens that entry for editing
     var editId = new URLSearchParams(location.search).get('edit');
-    if (editId) {
+    if (editId && /^\d+$/.test(editId)) {
       var one = await M.db.from('entries').select('*').eq('id', editId).maybeSingle();
       if (one.data) startEdit(one.data);
     }
@@ -525,6 +622,7 @@
 
   async function login(event) {
     event.preventDefault();
+    if (enforceLock()) return;
     clearStatus();
     var btn = $('login-button');
     btn.disabled = true;
@@ -535,16 +633,98 @@
     });
     btn.disabled = false;
     btn.textContent = 'log in';
+    $('login-password').value = '';
     if (res.error) {
-      status(/invalid/i.test(res.error.message) ? 'Wrong email or password.' : 'Login failed: ' + explain(res.error), 'error');
+      if (isRateLimited(res.error)) status('Supabase is blocking logins from this connection for a while (too many tries). Wait a few minutes.', 'error');
+      else if (/invalid/i.test(res.error.message)) failMessage('email or password');
+      else status('Login failed: ' + explain(res.error), 'error');
       return;
     }
-    $('login-password').value = '';
+    // Only a right password AND (if on) a right code counts as a success; see verifyMfa.
+    var aal = await M.db.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (!(aal.data && aal.data.nextLevel === 'aal2' && aal.data.currentLevel !== 'aal2')) recordSuccess();
     showForSession(res.data.session);
   }
 
-  async function logout(event) {
+  // 6-digit code at login time
+  async function verifyMfa(event) {
     event.preventDefault();
+    if (enforceLock()) return;
+    clearStatus();
+    var code = $('mfa-code').value.replace(/\s/g, '');
+    if (!/^\d{6}$/.test(code)) { status('The code is 6 digits.', 'error'); return; }
+    $('mfa-button').disabled = true;
+    var factors = await M.db.auth.mfa.listFactors();
+    var totp = factors.data && factors.data.totp && factors.data.totp[0];
+    var res = totp
+      ? await M.db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: code })
+      : { error: { message: 'no authenticator set up' } };
+    $('mfa-button').disabled = false;
+    $('mfa-code').value = '';
+    if (res.error) {
+      if (isRateLimited(res.error)) status('Supabase is blocking tries from this connection for a while. Wait a few minutes.', 'error');
+      else failMessage('code');
+      return;
+    }
+    recordSuccess();
+    var s = await M.db.auth.getSession();
+    showForSession(s.data.session);
+  }
+
+  // ---------- turning on 2-step login ----------
+
+  var enrolling = null;   // factor id while setting up
+
+  async function startEnroll() {
+    clearStatus();
+    $('mfa-start').disabled = true;
+    // Clear out any half-finished setup from before.
+    var existing = await M.db.auth.mfa.listFactors();
+    var leftovers = ((existing.data && existing.data.all) || []).filter(function (f) { return f.status !== 'verified'; });
+    for (var i = 0; i < leftovers.length; i++) await M.db.auth.mfa.unenroll({ factorId: leftovers[i].id });
+
+    var res = await M.db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Moridaya ' + Date.now() });
+    $('mfa-start').disabled = false;
+    if (res.error) { status("Couldn't start 2-step setup: " + explain(res.error), 'error'); return; }
+    enrolling = res.data.id;
+    $('mfa-qr').src = res.data.totp.qr_code;
+    $('mfa-secret').textContent = res.data.totp.secret;
+    $('mfa-off').hidden = true;
+    $('mfa-enroll').hidden = false;
+    $('mfa-enroll-code').value = '';
+    $('mfa-enroll-code').focus();
+  }
+
+  async function finishEnroll(event) {
+    event.preventDefault();
+    var code = $('mfa-enroll-code').value.replace(/\s/g, '');
+    if (!/^\d{6}$/.test(code)) { status('The code is 6 digits.', 'error'); return; }
+    $('mfa-enroll-button').disabled = true;
+    var res = await M.db.auth.mfa.challengeAndVerify({ factorId: enrolling, code: code });
+    $('mfa-enroll-button').disabled = false;
+    if (res.error) { status('That code didn\'t match. Codes change every 30 seconds; try the current one.', 'error'); return; }
+    enrolling = null;
+    $('mfa-qr').removeAttribute('src');
+    $('mfa-secret').textContent = '';
+    var s = await M.db.auth.getSession();
+    await showForSession(s.data.session);
+    status('2-step login is on. From now on, logging in needs your password and a code from the app. ' +
+      'Keep the app on your phone; if you lose it, see "Lost your phone" in the README.', 'ok');
+  }
+
+  async function cancelEnroll() {
+    if (enrolling) await M.db.auth.mfa.unenroll({ factorId: enrolling });
+    enrolling = null;
+    $('mfa-qr').removeAttribute('src');
+    $('mfa-secret').textContent = '';
+    $('mfa-enroll').hidden = true;
+    $('mfa-off').hidden = false;
+    clearStatus();
+  }
+
+  async function logout(event) {
+    if (event) event.preventDefault();
+    if (enrolling) await cancelEnroll();
     await M.db.auth.signOut();
     resetForm(false);
     status('Logged out.', 'ok');
@@ -554,6 +734,12 @@
   // ---------- start ----------
 
   document.addEventListener('DOMContentLoaded', function () {
+    // Refuse to work inside another site's frame (stops "clickjacking" tricks).
+    if (window.top !== window.self) {
+      document.body.textContent = 'This page can only be opened directly.';
+      return;
+    }
+
     if (!M.db) {
       status(M.configured
         ? "Couldn't load the Supabase library. Check your internet connection and refresh."
@@ -569,6 +755,11 @@
     $('entry-form').addEventListener('submit', save);
     $('cancel-edit').addEventListener('click', function () { resetForm(false); clearStatus(); });
     $('login-form').addEventListener('submit', login);
+    $('mfa-form').addEventListener('submit', verifyMfa);
+    $('mfa-cancel').addEventListener('click', logout);
+    $('mfa-start').addEventListener('click', startEnroll);
+    $('mfa-enroll').addEventListener('submit', finishEnroll);
+    $('mfa-enroll-cancel').addEventListener('click', cancelEnroll);
     $('logout').addEventListener('click', logout);
 
     M.db.auth.getSession().then(function (res) { showForSession(res.data.session); });

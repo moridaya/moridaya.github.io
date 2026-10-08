@@ -39,6 +39,15 @@ create table if not exists public.entries (
   private     boolean not null default false
 );
 
+-- Sanity limits, so a mistake (or a stolen login) can't stuff giant rows in.
+-- NOT VALID = only checked on new and edited rows, so re-running never fails on old data.
+alter table public.entries drop constraint if exists entries_size_limits;
+alter table public.entries add constraint entries_size_limits check (
+  octet_length(data::text) <= 100000
+  and cardinality(tags) <= 30
+  and cardinality(media) <= 30
+) not valid;
+
 create index if not exists entries_entry_date_idx on public.entries (entry_date desc);
 create index if not exists entries_type_idx       on public.entries (type, created_at desc);
 create index if not exists entries_tags_idx       on public.entries using gin (tags);
@@ -67,6 +76,8 @@ insert into public.site_stats (key, value) values ('visits', 0)
 -- 2. "Is the logged-in person the owner?"
 --    Used by every write rule below. It looks the user up in site_owner,
 --    so a stranger with a Supabase account still can't write anything.
+--    Once 2-step login is turned on (posting page), a login that only
+--    used the password is NOT enough: the 6-digit code step is required.
 -- ---------------------------------------------------------------------
 
 create or replace function public.is_owner()
@@ -78,6 +89,13 @@ set search_path = ''
 as $$
   select exists (
     select 1 from public.site_owner where user_id = auth.uid()
+  )
+  and (
+    coalesce(auth.jwt() ->> 'aal', 'aal1') = 'aal2'
+    or not exists (
+      select 1 from auth.mfa_factors f
+      where f.user_id = auth.uid() and f.status = 'verified'
+    )
   );
 $$;
 
@@ -220,10 +238,13 @@ grant execute on function public.get_visits()  to anon, authenticated;
 --    The bucket is "public", meaning a file can be opened by anyone who
 --    has its exact link. Nobody but the owner can list, upload or delete.
 --    File names get a random part, so links can't be guessed.
+--    Only plain photo formats and audio are accepted (no SVG, which can
+--    carry code).
 -- ---------------------------------------------------------------------
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('media', 'media', true, 5242880, array['image/*', 'audio/*'])
+values ('media', 'media', true, 5242880,
+        array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'audio/*'])
 on conflict (id) do update
   set public             = excluded.public,
       file_size_limit    = excluded.file_size_limit,

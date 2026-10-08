@@ -87,10 +87,65 @@ Security"). Every request is checked there:
 | Anyone | read entries that aren't private, read weather, bump the visitor counter |
 | Deffoh (logged in) | everything: read private entries, post, edit, delete, upload |
 
+**"I can see a key when I click Inspect."** That's the anon key in
+`js/config.js`, and it's supposed to be public: every Supabase website has
+one in its code. It works like a building's street address. It tells the
+browser where the database is, but the locks (the rules above) decide what
+it may do, which is only "read public entries". The key that must stay
+secret is the `service_role` key (or a key starting with `sb_secret_`).
+It is not in this repo and never should be.
+
+Other protections built in:
+
+- **2-step login** (turn it on from the posting page). Once on, the database
+  itself refuses any change from a login that skipped the 6-digit code, so a
+  stolen password alone is useless.
+- **Wrong-password lockout**: 3 wrong tries lock login on that device for
+  15 minutes, then 30 min, 1 h, ... up to 8 h. Someone determined can get
+  around this one by clearing their browser data, so the server-side limits
+  below are what really stop password guessing.
+- **Content Security Policy** on every page: the browser only runs code
+  from this site and only talks to Supabase, Open-Meteo and iTunes. Even if
+  someone slipped code into an entry, it would not run (and entries are
+  always shown as plain text anyway).
+- **No outside code**: the Supabase library is kept in `js/vendor/`
+  instead of loaded from a CDN, so no other server can change what runs here.
+- The posting page refuses to work inside another site's frame.
+- Uploads are limited to 5 MB and to JPEG/PNG/WebP/GIF/audio. Entries have
+  size limits too.
+
 Photos go in a storage bucket called `media`. A photo can be opened by anyone
 who has its exact link, but nobody else can list, upload or delete files, and
 file names are random so links can't be guessed. That means a photo on a
 private entry is hidden, but not locked: don't share its link.
+
+### Security checklist for the Supabase dashboard
+
+These settings live in Supabase, not in this code, so only you can change them.
+
+1. **Re-run `sql/setup.sql`** whenever it changes (it's safe to re-run).
+2. **Authentication > Sign In / Providers**: "Allow new users to sign up" is
+   **off**. "Allow anonymous sign-ins" is **off**. Only Email is enabled.
+3. **Authentication > Rate Limits**: lower "sign-ups and sign-ins" to about
+   **10 per 5 minutes**, and "token verifications" (2-step codes) to about
+   **10 per 5 minutes**. This is the real anti-bombing limit: it's enforced
+   on Supabase's servers per internet connection, and nobody can switch it
+   off from a browser.
+4. **Authentication > URL Configuration**: set Site URL to
+   `https://moridaya.github.io`.
+5. **Use a long password** you don't use anywhere else (a 4-5 word phrase
+   is great), then **turn on 2-step login** from the posting page.
+6. **Advisors > Security Advisor**: click "Rerun linter". It should show no
+   errors. If it shows something, send it to Claude.
+7. Never paste the `service_role` / `sb_secret_` key into this repo, a chat,
+   or a screenshot. If it ever leaks, go to **Project Settings > API Keys**
+   and roll (replace) it.
+
+### Lost your phone (2-step login)
+
+In Supabase go to **Authentication > Users**, open your user, and delete
+the authenticator factor. Then log in with just your password and set
+2-step login up again on your new phone.
 
 ## Entry fields
 

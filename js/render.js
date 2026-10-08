@@ -18,8 +18,8 @@
     }
     (kids || []).forEach(function (kid) {
       if (kid === null || kid === undefined || kid === false || kid === '') return;
-      node.appendChild(typeof kid === 'string' || typeof kid === 'number'
-        ? document.createTextNode(String(kid)) : kid);
+      // Anything that isn't a real element (odd data, objects) is shown as plain text.
+      node.appendChild(kid instanceof Node ? kid : document.createTextNode(String(kid)));
     });
     return node;
   }
@@ -82,12 +82,23 @@
     var url = safeUrl(item) || M.mediaUrl(item);
     if (!url) return null;
     if (AUDIO_EXT.test(item)) return el('audio', { controls: true, preload: 'none', src: url });
-    return el('a', { href: url }, [el('img', { src: url, alt: '', loading: 'lazy' })]);
+    return zoomable(url, '');
+  }
+
+  // A picture that opens big in the viewer (js/lightbox.js) when clicked.
+  function zoomable(url, cls) {
+    return el('a', { href: url, class: 'zoom' + (cls ? ' ' + cls : '') }, [
+      el('img', { src: url, alt: '', loading: 'lazy' })
+    ]);
+  }
+
+  function isImagePath(item) {
+    return typeof item === 'string' && !youtubeId(item) && !AUDIO_EXT.test(item) && !/^https?:/i.test(item);
   }
 
   function mediaBlock(list) {
     if (!Array.isArray(list) || !list.length) return null;
-    return el('div', { class: 'media' }, list.map(mediaItem));
+    return el('div', { class: 'media' }, list.map(mediaItem).filter(Boolean));
   }
 
   // ---------- per-type bodies ----------
@@ -102,8 +113,8 @@
 
   // '8:00 PM - 12:00 PM (16 h)' or 'started 8:00 PM, still going'
   M.fastingWindow = function (d) {
-    if (!has(d.start)) return null;
-    if (!has(d.end)) return 'started ' + M.formatTime(d.start) + ', still going';
+    if (!has(d.start) || !M.formatTime(d.start)) return null;
+    if (!has(d.end) || !M.formatTime(d.end)) return 'started ' + M.formatTime(d.start) + ', still going';
     var span = hoursBetween(d.start, d.end);
     return M.formatTime(d.start) + ' – ' + M.formatTime(d.end) + (span ? ' (' + span + ')' : '');
   };
@@ -160,10 +171,11 @@
 
     photo: function (d) { return [para(d.caption)]; },
 
-    song: function (d) {
+    song: function (d, entry) {
       var title = has(d.title) ? d.title : 'untitled';
+      var cover = songCover(d, entry);
       var line = el('div', { class: 'song' }, [
-        safeUrl(d.album_art) ? el('img', { src: d.album_art, alt: '', loading: 'lazy' }) : null,
+        cover ? zoomable(cover, 'cover') : null,
         el('div', null, [el('b', null, [title]), has(d.artist) ? ' — ' + d.artist : null])
       ]);
       return [line, spotifyEmbed(d.spotify_url)];
@@ -209,6 +221,14 @@
     }
   };
 
+  // Song cover: the album art link, or else the first uploaded picture on the entry.
+  function songCover(d, entry) {
+    if (safeUrl(d.album_art)) return d.album_art;
+    var media = Array.isArray(entry.media) ? entry.media : [];
+    for (var i = 0; i < media.length; i++) if (isImagePath(media[i])) return M.mediaUrl(media[i]);
+    return null;
+  }
+
   function tagsLine(tags) {
     if (!Array.isArray(tags) || !tags.length) return null;
     var kids = ['tags: '];
@@ -221,15 +241,21 @@
 
   // One entry row -> one <article>.
   M.renderEntry = function (entry) {
-    var d = entry.data || {};
-    var body = (BODIES[entry.type] || function (x) { return [para(x.text || x.note)]; })(d);
+    var d = (entry.data && typeof entry.data === 'object') ? entry.data : {};
+    var body = (BODIES.hasOwnProperty(entry.type) ? BODIES[entry.type] : function (x) { return [para(x.text || x.note)]; })(d, entry);
+    var media = Array.isArray(entry.media) ? entry.media : [];
+    if (entry.type === 'song' && !safeUrl(d.album_art)) {
+      // the first picture is already shown as the small cover
+      var used = false;
+      media = media.filter(function (m) { if (!used && isImagePath(m)) { used = true; return false; } return true; });
+    }
     return el('article', { class: 'entry entry-' + entry.type }, [
       el('div', { class: 'entry-meta' }, [
         M.formatTime(entry.created_at), ' · ',
         el('span', { class: 'kind' }, [entry.type]),
         entry.private ? el('span', { class: 'private' }, [' · private']) : null
       ])
-    ].concat(body, [mediaBlock(entry.media), tagsLine(entry.tags)]));
+    ].concat(body, [mediaBlock(media), tagsLine(entry.tags)]));
   };
 
   // Fill a container with entries (already sorted by the caller).
