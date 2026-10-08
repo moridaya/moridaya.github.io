@@ -42,7 +42,7 @@
         .eq('type', 'quote').order('id').then(M.rows);
     },
     now: function (c) {
-      return Promise.all([latest(c, 'reading'), latest(c, 'body', 30), latest(c, 'fasting'),
+      return Promise.all([latest(c, 'reading', 10), latest(c, 'body', 30), latest(c, 'fasting'),
         latest(c, 'learned'), latest(c, 'goal', 30)]).then(function (r) {
         return { reading: r[0], body: r[1], fasting: r[2], learned: r[3], goal: r[4] };
       });
@@ -105,13 +105,14 @@
     now: function (n) {
       var box = $('now'), tbody = box.querySelector('tbody');
       tbody.textContent = '';
-      var reading = n.reading[0] && n.reading[0].data;
+      var reading = null;   // the latest book not marked finished
+      (n.reading || []).some(function (r) { var d = r.data || {}; if (d.title && !d.finished) { reading = d; return true; } return false; });
       var weight = firstWith(n.body, 'weight_kg');
       var height = firstWith(n.body, 'height_cm');
       var fast = n.fasting[0] && n.fasting[0].data;
       var learned = n.learned[0] && n.learned[0].data;
       var goal = null;
-      (n.goal || []).some(function (g) { var d = g.data || {}; if (d.text && !d.done) { goal = d; return true; } return false; });
+      (n.goal || []).some(function (g) { var d = g.data || {}; if (d.text && !d.done && !d.dropped) { goal = d; return true; } return false; });
       var streak = state.dates ? streakFrom(state.dates) : 0;
 
       var list = [];

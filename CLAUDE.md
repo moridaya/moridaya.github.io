@@ -138,9 +138,25 @@ README.md has the setup steps and the entry field reference; this file has the r
   previous/next day; handles impossible, future and empty dates.
 - **Post** (`html/post.html`): login (+ optional 2-step), one form whose fields change by
   type, photo compression to ~300 KB JPEG (song covers ~600px/120 KB), edit/delete recent.
-- **Ribbon** (`js/ribbon.js`): `[home] [archive] [hobbies] [bookshelf] [quotes] [goals]
-  [places] [random day] [about]`. Pages not built yet have no `ready: true` flag and show
-  gray "(soon)", not clickable. When you build a page, set its flag in the same PR.
+- **Ribbon** (`js/ribbon.js`): `[home] [archive] [favorites] [hobbies] [bookshelf] [quotes]
+  [goals] [places] [about]`. Pages not built yet have no `ready: true` flag and show gray
+  "(soon)", not clickable. When you build a page, set its flag in the same PR. Only
+  [places] is still "soon". **Random day was dropped (he doesn't want it); don't build it.**
+- **Favorites** (`html/favorites.html`, tables in `sql/004_favorites.sql`): editable
+  categories (seeded: philosopher, chess player, FlipTop emcee, food, song, book, movie,
+  place, emotion, word). A favorite = name, optional photo (600px/120 KB), one-line why,
+  since date. The current one has empty `until`; `set_favorite()` closes the old one
+  (until = new since) so history shows "previously: X, from A to B". Empty categories are
+  hidden on the public page. Managed in the Favorites box on the posting page
+  (`js/post-favorites.js`, which uses helpers post.js exposes as `M.post`).
+- **Hobbies**: every tag with its count; `hobbies.html?tag=x` shows that tag's entries as a
+  bento grid with dates (`showDate`). **Quotes**: every quote, newest first.
+  **Bookshelf**: built from reading entries; same title (ignoring case) = one book;
+  finished once any entry has `finished`; pages logged = sum of each book's highest page.
+  **Goals**: active / done / dropped from goal entries (`done`, `dropped`, `closed_on`).
+  **About**: static placeholder text he fills in himself.
+- Phones (< 640px): header, title, ribbon, day counter and theme button are centered;
+  entry text stays left-aligned.
 
 ## Data
 
@@ -152,9 +168,9 @@ README.md has the setup steps and the entry field reference; this file has the r
 
 ## Build order / what's left
 
-Done: 1 database, 2 home, 3 posting, 4 archive + day.
-Next (step 5): hobbies (tags as buttons), song search with the iTunes Search API (no key),
-auto-save Manila weather from Open-Meteo per day into `day_weather`, random day (20-second
-weekday guess, doomsday style, then open that day).
+Done: 1 database, 2 home, 3 posting, 4 archive + day, favorites, hobbies, quotes,
+bookshelf, goals, about.
+Next: song search with the iTunes Search API (no key), auto-save Manila weather from
+Open-Meteo per day into `day_weather`. Random day: dropped.
 Later, not v1: weight graph, year-in-pixels mood grid, "changed my mind" log, letter to
 future self, RSS, search, places map.

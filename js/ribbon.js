@@ -7,15 +7,14 @@
   var ITEMS = [
     { label: 'home', path: 'index.html', ready: true },
     { label: 'archive', path: 'html/archive.html', ready: true },
-    { label: 'hobbies', path: 'html/hobbies.html' },
-    { label: 'bookshelf', path: 'html/bookshelf.html' },
-    { label: 'quotes', path: 'html/quotes.html' },
-    { label: 'goals', path: 'html/goals.html' },
+    { label: 'favorites', path: 'html/favorites.html', ready: true },
+    { label: 'hobbies', path: 'html/hobbies.html', ready: true },
+    { label: 'bookshelf', path: 'html/bookshelf.html', ready: true },
+    { label: 'quotes', path: 'html/quotes.html', ready: true },
+    { label: 'goals', path: 'html/goals.html', ready: true },
     { label: 'places', path: 'html/places.html' },
-    { label: 'random day', path: 'html/random.html' },
-    { label: 'about', path: 'html/about.html' }
+    { label: 'about', path: 'html/about.html', ready: true }
   ];
-
   document.addEventListener('DOMContentLoaded', function () {
     var nav = document.getElementById('ribbon');
     if (!nav) return;

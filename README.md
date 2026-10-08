@@ -168,10 +168,10 @@ in `data`:
 | photo | `caption` (photos themselves go in `media`) |
 | song | `title`, `artist`, `album_art` (image link), `spotify_url` (optional) |
 | quote | `text`, `source` |
-| reading | `title`, `author`, `page` (optional), `note` |
+| reading | `title`, `author`, `page` (optional), `finished` (true/false), `note` |
 | body | `weight_kg`, `height_cm` (either or both) |
 | food | `text` (photos go in `media`) |
-| goal | `text`, `target_date` (optional), `done` (true/false) |
+| goal | `text`, `target_date` (optional), `done` (true/false), `dropped` (true/false), `closed_on` (date done/dropped, optional) |
 | mood | `mood` (a word), `note` |
 
 `media` holds storage paths (like `2026/10/08/x7k2.jpg`) or YouTube links.

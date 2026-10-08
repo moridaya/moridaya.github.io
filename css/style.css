@@ -543,3 +543,25 @@ ul.chapters li { padding: 3px 0; border-bottom: 1px dotted var(--soft-rule); }
 .pair-pixel .sample-title { font-size: 26px; }
 .pair-pixel .section-head { font-size: 11px; }
 .pair-pixel .sample-entry, .pair-pixel .pair-why { font-size: 21px; }
+
+/* ---------- favorites, hobbies, quotes, bookshelf, goals ---------- */
+
+.fav-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 28px; }
+.fav { margin-bottom: 14px; min-width: 0; }
+.fav-current { display: flex; gap: 12px; align-items: flex-start; }
+.fav-photo img { width: 72px; height: 72px; object-fit: cover; border: 1px solid var(--soft-rule); display: block; }
+.fav-name { margin: 0; font-size: 21px; font-family: var(--font-head); color: var(--navy); }
+.fav-why { margin: 2px 0; font-style: italic; }
+.fav-past { margin-top: 6px; }
+.tag-cloud { line-height: 2; }
+.tag-cloud .item { white-space: nowrap; margin-right: 6px; }
+.quote-item { margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px dotted var(--soft-rule); }
+.quote-item blockquote { margin: 0 0 4px; font-style: italic; font-size: 19px; white-space: pre-line; overflow-wrap: anywhere; }
+ul.shelf { margin: 0 0 14px; padding-left: 20px; }
+ul.shelf li { margin-bottom: 8px; overflow-wrap: anywhere; }
+.shelf-stats { margin-top: 0; }
+.about p { max-width: 640px; }
+
+@media (max-width: 640px) {
+  .fav-grid { grid-template-columns: 1fr; }
+}
