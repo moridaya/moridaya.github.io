@@ -17,11 +17,13 @@
   }
 
   function fact(label, value) {
-    $('day-facts').querySelector('tbody').appendChild(el('tr', null, [el('th', null, [label]), el('td', null, [value])]));
+    var box = $('day-facts');
+    if (box.childNodes.length) box.appendChild(document.createTextNode(' \u00B7 '));
+    box.appendChild(el('span', { class: 'fact' }, [el('span', { class: 'note' }, [label + ' ']), value]));
   }
 
   function message(text) {
-    var out = $('timeline');
+    var out = $('bento');
     out.textContent = '';
     out.appendChild(el('p', { class: 'empty' }, [text]));
   }
@@ -94,8 +96,14 @@
       var weather = r[1], entries = r[2];
       if (weather) fact('weather', weather);
       fact('entries', String(entries.length));
-      M.renderTimeline($('timeline'), entries,
-        date === today ? 'Nothing yet today. A new page, waiting.' : 'Nothing was written on this day.');
+      // Same bento grid as the home page, but with every entry and tiles that grow to fit.
+      M.renderBento($('bento'), entries, {
+        emptyText: date === today ? 'Nothing yet today. A new page, waiting.' : 'Nothing was written on this day.'
+      });
+      if (location.hash) {
+        var target = document.getElementById(location.hash.slice(1));
+        if (target) target.scrollIntoView({ block: 'center' });
+      }
     }).catch(function (err) {
       if (window.console) console.error('day', err);
       message("Couldn't load this day. Try refreshing.");

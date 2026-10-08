@@ -1,4 +1,4 @@
-// Turns entry rows into HTML. Shared by the home timeline and (later) the day page,
+// Turns entry rows into HTML. Shared by the home page and the day page (via js/bento.js),
 // so a day looks the same everywhere.
 //
 // Text is always inserted as plain text, never as HTML, so nothing typed into an
@@ -57,6 +57,7 @@
     var m = /open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|album|playlist|episode|show)\/([A-Za-z0-9]+)/.exec(url || '');
     if (!m) return null;
     return el('iframe', {
+      class: 'spotify',
       src: 'https://open.spotify.com/embed/' + m[1] + '/' + m[2],
       height: m[1] === 'track' ? '152' : '352',
       loading: 'lazy',
@@ -202,7 +203,9 @@
         cover ? zoomable(cover, 'cover', photoCaption(entry, d), 'album cover' + (has(d.title) ? ': ' + d.title : '')) : null,
         el('div', null, [el('b', null, [title]), has(d.artist) ? ' — ' + d.artist : null])
       ]);
-      return [line, spotifyEmbed(d.spotify_url)];
+      var player = spotifyEmbed(d.spotify_url);
+      if (player) line.className += ' has-player';   // small tiles show just the player
+      return [line, player];
     },
 
     quote: function (d) {
@@ -280,15 +283,5 @@
         entry.private ? el('span', { class: 'private' }, [' · private']) : null
       ])
     ].concat(body, [mediaBlock(media, photoCaption(entry, d), photoAlt(entry, photoCaption(entry, d))), tagsLine(entry.tags)]));
-  };
-
-  // Fill a container with entries (already sorted by the caller).
-  M.renderTimeline = function (container, entries, emptyText) {
-    container.textContent = '';
-    if (!entries.length) {
-      container.appendChild(el('p', { class: 'empty' }, [emptyText || 'Nothing here.']));
-      return;
-    }
-    entries.forEach(function (e) { container.appendChild(M.renderEntry(e)); });
   };
 })();
