@@ -30,6 +30,12 @@ You only do this once. Takes about 10 minutes.
 3. You should see "Success. No rows returned". If you ever change that file
    later, you can run the whole thing again. It won't delete your entries.
 
+### 2b. Run the numbered SQL files too
+
+After `setup.sql`, run each numbered file in `sql/` once, in order (`002_speed.sql`,
+`003_...`, ...), the same way. Each is safe to run again. New ones get added over time;
+the pull request that adds one will say so.
+
 ### 3. Create your login and lock the door
 
 1. **Authentication > Users > Add user > Create new user.** Use your email and a

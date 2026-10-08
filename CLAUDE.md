@@ -9,7 +9,11 @@ README.md has the setup steps and the entry field reference; this file has the r
 - BS Economics student, not a developer. Explain steps plainly, casual tone is fine,
   be direct and give reasons. Say what *he* has to do (e.g. re-run SQL) clearly.
 - Keep changes small and reviewable. Work on a branch, open a pull request, never push to `main`.
-- If a change touches `sql/setup.sql`, tell him to re-run it in the Supabase SQL editor.
+- Database changes go in a NEW numbered file (`sql/002_speed.sql`, `sql/003_...`), never edits
+  to `setup.sql` or older files. Each file is idempotent (safe to re-run) and he pastes it into
+  the Supabase SQL editor himself; always tell him which files to run, in order.
+- When working unattended: don't stop to ask, pick the most reasonable option and list every
+  decision in the PR description. One PR per group of work, push after each finished item.
 - Claude can't reach his live Supabase from the sandbox. Test with Playwright against a
   mocked Supabase API (real supabase-js), and say plainly that live testing is his step.
 
@@ -21,8 +25,14 @@ README.md has the setup steps and the entry field reference; this file has the r
 - Folders by language: `/index.html`, `/html/` (other pages), `/css/style.css`, `/js/` (one
   file per feature), `/sql/setup.sql` (whole database; idempotent, safe to re-run), `404.html`.
 - JS: classic scripts (not modules), ES5-style `var`/`function` plus async/await where it
-  reads better. Everything shared hangs off `window.Moridaya` (`M`). Load order matters:
+  reads better. Everything shared hangs off `window.Moridaya` (`M`). All scripts are in
+  `<head>` with `defer` (download in parallel, run in order after parsing), except
+  `theme.js`, which runs immediately so the page never flashes the wrong theme. Order:
   vendor supabase -> config -> db -> render -> (lightbox, bento) -> ribbon -> page script.
+- Fonts are self-hosted in `/fonts` (Latin-subset woff2, SIL OFL) with `@font-face` at the
+  top of `style.css`; the two main ones are preloaded. No Google Fonts requests.
+- Each page has `<link rel="preconnect">` to the Supabase project URL (hard-coded; update it
+  if the project ever changes).
 - `js/vendor/supabase-2.45.4.js` is the unmodified npm file (hash in `js/vendor/README.md`).
   Never load scripts from a CDN.
 
@@ -45,6 +55,23 @@ README.md has the setup steps and the entry field reference; this file has the r
 - Visitor counter: everyone adds 1 (not the owner), only the owner sees the number
   (`get_visits()` returns null otherwise).
 
+## Loading: fast, and never hangs
+
+- Two connections (`js/db.js`):
+  - `M.db`: public, never reads or refreshes the saved login, so it can't hang because of
+    it. Use it for everything public.
+  - `M.authClient()`: the logged-in connection (posting page). `M.ownerClient()` returns it
+    only when this browser has a saved login (`M.hasStoredSession()`), else null.
+- Every request has a time limit: fetch is wrapped (10 s), `M.withTimeout()` for anything
+  else. The supabase-js login lock waits at most 4 s, then takes the lock over (`steal`);
+  by default it waits forever, which made logged-in browsers hang (frozen tab holding the
+  lock, or a token refresh that never answered).
+- Pages load in layers with `M.layered()`: cached copy (instant) -> public data -> owner's
+  data (private entries) on top. Owner failures never blank the page; show a short note.
+  Only public data is cached (`M.cache`, localStorage), never private entries.
+- Fetch only the columns a page needs. Run independent requests in parallel.
+- RLS policies call `(select public.is_owner())` so Postgres checks it once per query.
+
 ## Time: always Manila
 
 - "Today" is always `M.manilaDate()` (Asia/Manila, UTC+8, no daylight saving), never the
@@ -63,9 +90,9 @@ README.md has the setup steps and the entry field reference; this file has the r
   Colors are CSS variables on `:root` with a dark set under `:root[data-theme="dark"]`.
 - Dark mode: one sun/moon button at the top right, saved in localStorage (try/catch).
 - Fonts are four variables: `--font-head`, `--font-body`, `--font-meta`, `--font-mono`.
-  Current pairing is **2. Retro serif** (IM Fell English + Old Standard TT, from Google
-  Fonts); Verdana for small meta text, Courier New for counters. `html/fonts.html` previews
-  the three options. To switch: change the variables and the Google Fonts `<link>` on each page.
+  Current pairing is **2. Retro serif** (IM Fell English + Old Standard TT, self-hosted);
+  Verdana for small meta text, Courier New for counters. `html/fonts.html` previews the three
+  options. To switch: change the variables and the font preload `<link>`s on each page.
 - Narrow centered column (max 860px), works on phones (16px side padding, things stack
   below 640px, no sideways scroll).
 - Empty states are short lines in the site's voice, e.g. "Nothing yet today. A new page,

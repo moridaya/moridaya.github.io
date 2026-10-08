@@ -3,13 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="robots" content="noindex">
   <title>post - Moridaya</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&amp;family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&amp;display=swap">
+  <link rel="preload" href="../fonts/old-standard-tt-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/im-fell-english-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preconnect" href="https://uxjsqgeynszqhkzzwvhd.supabase.co" crossorigin>
   <link rel="stylesheet" href="../css/style.css">
+  <script defer src="../js/vendor/supabase-2.45.4.js"></script>
+  <script defer src="../js/config.js"></script>
+  <script defer src="../js/db.js"></script>
+  <script defer src="../js/render.js"></script>
+  <script defer src="../js/lightbox.js"></script>
+  <script defer src="../js/ribbon.js"></script>
+  <script defer src="../js/compress.js"></script>
+  <script defer src="../js/post.js"></script>
   <script src="../js/theme.js"></script>
 </head>
 <body data-root="../" data-page="post">
@@ -123,13 +132,5 @@
 
 </div>
 
-<script src="../js/vendor/supabase-2.45.4.js"></script>
-<script src="../js/config.js"></script>
-<script src="../js/db.js"></script>
-<script src="../js/render.js"></script>
-<script src="../js/lightbox.js"></script>
-<script src="../js/ribbon.js"></script>
-<script src="../js/compress.js"></script>
-<script src="../js/post.js"></script>
 </body>
 </html>
