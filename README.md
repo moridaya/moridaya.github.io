@@ -30,6 +30,12 @@ You only do this once. Takes about 10 minutes.
 3. You should see "Success. No rows returned". If you ever change that file
    later, you can run the whole thing again. It won't delete your entries.
 
+### 2b. Run the numbered SQL files too
+
+After `setup.sql`, run each numbered file in `sql/` once, in order (`002_speed.sql`,
+`003_...`, ...), the same way. Each is safe to run again. New ones get added over time;
+the pull request that adds one will say so.
+
 ### 3. Create your login and lock the door
 
 1. **Authentication > Users > Add user > Create new user.** Use your email and a
@@ -71,6 +77,11 @@ and log in. Pick a type and the form changes to match. A few things to know:
 - **Times** (like fasting start/end) are always read as Manila time, even if
   your phone is set to another timezone.
 - **Tags** are lowercased, so `Running` and `running` are the same hobby.
+- **Songs**: start typing in "search a song" and pick a result; it fills in the title,
+  artist and cover. You can still type everything by hand.
+- **Weather**: the first time you open the posting page each day, it saves Manila's
+  weather for that day; it shows on that day's page.
+- **Favorites**: managed in the Favorites box near the bottom of the posting page.
 - **Recent posts** at the bottom let you edit or delete. Deleting an entry
   also deletes its photos.
 - Staying logged in on a device also shows your private entries on the home page.
@@ -162,10 +173,10 @@ in `data`:
 | photo | `caption` (photos themselves go in `media`) |
 | song | `title`, `artist`, `album_art` (image link), `spotify_url` (optional) |
 | quote | `text`, `source` |
-| reading | `title`, `author`, `page` (optional), `note` |
+| reading | `title`, `author`, `page` (optional), `finished` (true/false), `note` |
 | body | `weight_kg`, `height_cm` (either or both) |
 | food | `text` (photos go in `media`) |
-| goal | `text`, `target_date` (optional), `done` (true/false) |
+| goal | `text`, `target_date` (optional), `done` (true/false), `dropped` (true/false), `closed_on` (date done/dropped, optional) |
 | mood | `mood` (a word), `note` |
 
 `media` holds storage paths (like `2026/10/08/x7k2.jpg`) or YouTube links.

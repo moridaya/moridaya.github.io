@@ -50,13 +50,15 @@
     var today = M.manilaDate();
     M.reloadAtMidnight(today);   // yesterday joins the list at midnight
 
-    M.db.rpc('entry_dates').then(function (res) {
-      if (res.error) throw res.error;
-      render(out, (res.data || []).filter(function (r) { return /^\d{4}-\d{2}-\d{2}$/.test(r.day); }), today);
-    }).catch(function (err) {
-      if (window.console) console.error('archive', err);
-      out.textContent = '';
-      out.appendChild(el('p', { class: 'note' }, ["couldn't load the archive. Try refreshing."]));
-    });
+    var clean = function (rows) { return (rows || []).filter(function (r) { return /^\d{4}-\d{2}-\d{2}$/.test(r.day); }); };
+    M.layered(
+      function (c) { return c.rpc('entry_dates').then(M.rows); },
+      function (rows) { render(out, clean(rows), today); },
+      function () {
+        out.textContent = '';
+        out.appendChild(el('p', { class: 'note' }, ["Couldn't load the archive. Check your connection and refresh."]));
+      },
+      'archive:dates'
+    );
   });
 })();

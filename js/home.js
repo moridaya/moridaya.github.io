@@ -1,127 +1,122 @@
-// Home page: fills the header, quote of the day, NOW box, On this day, and today's bento grid.
-// Each part loads on its own, so one failing doesn't blank the whole page.
+// Home page: header, quote of the day, today's bento grid, NOW box, On this day.
+//
+// How it loads, fast and without ever hanging:
+// 1. The last data this browser saw is shown instantly from the cache (public data only).
+// 2. Fresh public data loads in parallel through M.db (never touches the saved login),
+//    each piece with a time limit, and replaces the cached view as it arrives.
+// 3. If this browser has a saved login (the owner), the same pieces load again through the
+//    logged-in connection to add private entries. If that fails or times out, the public
+//    page stays and a short note says why. It can never block the page.
 (function () {
   var M = window.Moridaya = window.Moridaya || {};
   var el = function () { return M.el.apply(null, arguments); };
-
   function $(id) { return document.getElementById(id); }
 
-  // Supabase replies with {data, error}; turn an error into a thrown one.
-  function rows(res) {
-    if (res.error) throw res.error;
-    return res.data || [];
+  var PART_TIMEOUT = 12000;
+  var OWNER_TIMEOUT = 15000;
+  var ENTRY_COLUMNS = 'id, created_at, entry_date, type, tags, data, media, private';
+
+  var today;
+  var state = {};          // latest data per part
+  var fromOwner = {};      // parts already shown with the owner's (fuller) data
+  var shown = {};          // parts shown at least once (cache or network)
+
+  // ---------- fetching: each returns plain data; `c` is the connection to use ----------
+
+  function latest(c, type, limit) {
+    return c.from('entries').select('data').eq('type', type)
+      .order('entry_date', { ascending: false }).order('created_at', { ascending: false })
+      .limit(limit || 1).then(M.rows);
   }
 
-  function failed(node, what) {
-    return function (err) {
-      if (window.console) console.error(what, err);
-      if (node) {
-        node.textContent = '';
-        node.appendChild(el('p', { class: 'note' }, ["couldn't load " + what + '.']));
-      }
-    };
-  }
+  var FETCH = {
+    last: function (c) {
+      return c.from('entries').select('created_at').order('created_at', { ascending: false }).limit(1)
+        .then(M.rows).then(function (r) { return r.length ? r[0].created_at : null; });
+    },
+    dates: function (c) {
+      return c.rpc('entry_dates').then(M.rows);
+    },
+    quotes: function (c) {
+      return c.from('entries').select('id, text:data->>text, source:data->>source')
+        .eq('type', 'quote').order('id').then(M.rows);
+    },
+    now: function (c) {
+      return Promise.all([latest(c, 'reading', 10), latest(c, 'body', 30), latest(c, 'fasting'),
+        latest(c, 'learned'), latest(c, 'goal', 30)]).then(function (r) {
+        return { reading: r[0], body: r[1], fasting: r[2], learned: r[3], goal: r[4] };
+      });
+    },
+    otd: function (c) {
+      return c.rpc('on_this_day', { d: today }).select('entry_date, type').then(M.rows);
+    },
+    today: function (c) {
+      return c.from('entries').select(ENTRY_COLUMNS).eq('entry_date', today)
+        .order('created_at', { ascending: false }).then(M.rows);
+    }
+  };
+  var PARTS = Object.keys(FETCH);
 
-  // ---------- header: last updated ----------
+  // Day-specific parts are cached per date, so yesterday's never shows as today's.
+  function cacheKey(part) { return part === 'today' || part === 'otd' ? 'home:' + part + ':' + today : 'home:' + part; }
 
-  function loadLastUpdated() {
-    var out = $('last-updated');
-    return M.db.from('entries').select('created_at')
-      .order('created_at', { ascending: false }).limit(1)
-      .then(rows)
-      .then(function (r) {
-        out.textContent = r.length ? M.formatDateTime(r[0].created_at) + ' (Manila)' : 'no posts yet';
-      })
-      .catch(function () { out.textContent = '?'; });
-  }
+  // ---------- rendering ----------
 
-  // ---------- day counter + streak (both come from the list of dates) ----------
+  function pad(n) { var s = String(n); while (s.length < 4) s = '0' + s; return s; }
 
-  function countStreak(daySet, today) {
-    // Today counts if posted; if not yet, the streak is still alive from yesterday.
-    var d = daySet[today] ? today : M.addDays(today, -1);
+  function streakFrom(dates) {
+    var set = {};
+    (dates || []).forEach(function (r) { set[r.day] = true; });
+    var d = set[today] ? today : M.addDays(today, -1);   // today counts once posted
     var n = 0;
-    while (daySet[d]) { n++; d = M.addDays(d, -1); }
+    while (set[d]) { n++; d = M.addDays(d, -1); }
     return n;
   }
 
-  function loadDates(today) {
-    return M.db.rpc('entry_dates').then(rows).then(function (dates) {
-      var daySet = {};
-      dates.forEach(function (r) { daySet[r.day] = true; });
-      if (dates.length) {
-        var first = dates[dates.length - 1].day;   // list is newest first
-        var dayNo = Math.max(1, M.daysBetween(first, today) + 1);
-        var padded = String(dayNo);
-        while (padded.length < 4) padded = '0' + padded;
-        $('day-counter').textContent = 'DAY ' + padded;
-      }
-      return { streak: countStreak(daySet, today) };
-    }).catch(function (err) {
-      if (window.console) console.error('dates', err);
-      return { streak: 0 };
-    });
-  }
-
-  // ---------- quote of the day ----------
-
-  function loadQuote(today) {
-    return M.db.from('entries').select('id, data').eq('type', 'quote').order('id')
-      .then(rows)
-      .then(function (quotes) {
-        quotes = quotes.filter(function (q) { return q.data && q.data.text; });
-        if (!quotes.length) return;
-        // Same quote all day, a different one tomorrow.
-        var q = quotes[M.dayNumber(today) % quotes.length].data;
-        var box = $('qotd');
-        box.querySelector('blockquote').textContent = '“' + q.text + '”';
-        box.querySelector('.source').textContent = q.source ? '— ' + q.source : '';
-        box.hidden = false;
-      })
-      .catch(function (err) { if (window.console) console.error('quote', err); });
-  }
-
-  // ---------- NOW box ----------
-
-  function latest(type, limit) {
-    return M.db.from('entries').select('data, created_at').eq('type', type)
-      .order('entry_date', { ascending: false }).order('created_at', { ascending: false })
-      .limit(limit || 1)
-      .then(rows);
-  }
-
   function firstWith(list, field) {
-    for (var i = 0; i < list.length; i++) {
+    for (var i = 0; i < (list || []).length; i++) {
       var v = list[i].data && list[i].data[field];
       if (v !== null && v !== undefined && v !== '') return list[i].data;
     }
     return null;
   }
 
-  function loadNow(datesPromise) {
-    var box = $('now');
-    var tbody = box.querySelector('tbody');
-
-    return Promise.all([
-      latest('reading'), latest('body', 30), latest('fasting'),
-      latest('learned'), latest('goal', 30), datesPromise
-    ]).then(function (r) {
-      var reading = r[0][0] && r[0][0].data;
-      var weight = firstWith(r[1], 'weight_kg');
-      var height = firstWith(r[1], 'height_cm');
-      var fast = r[2][0] && r[2][0].data;
-      var learned = r[3][0] && r[3][0].data;
-      var goal = null;
-      for (var i = 0; i < r[4].length; i++) {
-        var g = r[4][i].data || {};
-        if (g.text && !g.done) { goal = g; break; }
+  var RENDER = {
+    last: function (v) {
+      $('last-updated').textContent = v ? M.formatDateTime(v) + ' (Manila)' : 'no posts yet';
+    },
+    dates: function (dates) {
+      var real = (dates || []).filter(function (r) { return /^\d{4}-\d{2}-\d{2}$/.test(r.day); });
+      if (real.length) {
+        var first = real[real.length - 1].day;   // newest first
+        $('day-counter').textContent = 'DAY ' + pad(Math.max(1, M.daysBetween(first, today) + 1));
       }
-      var streak = r[5].streak;
+      if (state.now) RENDER.now(state.now);    // the streak lives in the NOW box
+    },
+    quotes: function (quotes) {
+      quotes = (quotes || []).filter(function (q) { return q.text; });
+      var box = $('qotd');
+      if (!quotes.length) { box.hidden = true; return; }
+      var q = quotes[M.dayNumber(today) % quotes.length];   // same quote all day
+      box.querySelector('blockquote').textContent = '“' + q.text + '”';
+      box.querySelector('.source').textContent = q.source ? '— ' + q.source : '';
+      box.hidden = false;
+    },
+    now: function (n) {
+      var box = $('now'), tbody = box.querySelector('tbody');
+      tbody.textContent = '';
+      var reading = null;   // the latest book not marked finished
+      (n.reading || []).some(function (r) { var d = r.data || {}; if (d.title && !d.finished) { reading = d; return true; } return false; });
+      var weight = firstWith(n.body, 'weight_kg');
+      var height = firstWith(n.body, 'height_cm');
+      var fast = n.fasting[0] && n.fasting[0].data;
+      var learned = n.learned[0] && n.learned[0].data;
+      var goal = null;
+      (n.goal || []).some(function (g) { var d = g.data || {}; if (d.text && !d.done && !d.dropped) { goal = d; return true; } return false; });
+      var streak = state.dates ? streakFrom(state.dates) : 0;
 
       var list = [];
-      if (reading && reading.title) {
-        list.push(['reading', [el('i', null, [reading.title]), reading.author ? ' by ' + reading.author : null]]);
-      }
+      if (reading && reading.title) list.push(['reading', [el('i', null, [reading.title]), reading.author ? ' by ' + reading.author : null]]);
       if (weight) list.push(['weight', [weight.weight_kg + ' kg']]);
       if (height) list.push(['height', [height.height_cm + ' cm']]);
       var win = fast && M.fastingWindow(fast);
@@ -129,90 +124,127 @@
       if (learned && learned.topic) list.push(['learning', [M.link(learned.wikipedia_url, learned.topic) || learned.topic]]);
       if (goal) list.push(['goal', [goal.text]]);
       if (streak > 0) list.push(['streak', [streak + (streak === 1 ? ' day' : ' days')]]);
-
-      // Rows with no data are simply never added. No rows at all: hide the box.
       list.forEach(function (row) {
         tbody.appendChild(el('tr', null, [el('th', null, [row[0]]), el('td', null, row[1])]));
       });
-      box.hidden = list.length === 0;
-    }).catch(function (err) { if (window.console) console.error('NOW', err); });
-  }
-
-  // ---------- On this day ----------
-
-  function loadOnThisDay(today) {
-    var out = $('otd-list');
-    return M.db.rpc('on_this_day', { d: today }).then(rows).then(function (entries) {
+      box.hidden = list.length === 0;   // rows without data never appear
+    },
+    otd: function (entries) {
+      var out = $('otd-list');
       out.textContent = '';
       if (!entries.length) {
         out.appendChild(el('p', { class: 'note' }, ['nothing from this date in past years yet.']));
         return;
       }
-      // Group by date: one line per past year.
       var byDate = {}, order = [];
       entries.forEach(function (e) {
         if (!byDate[e.entry_date]) { byDate[e.entry_date] = []; order.push(e.entry_date); }
-        byDate[e.entry_date].push(e.type);
+        if (byDate[e.entry_date].indexOf(e.type) === -1) byDate[e.entry_date].push(e.type);
       });
       var thisYear = Number(today.slice(0, 4));
       var ul = el('ul');
       order.forEach(function (date) {
         var ago = thisYear - Number(date.slice(0, 4));
-        var types = byDate[date].filter(function (t, i, a) { return a.indexOf(t) === i; });
         ul.appendChild(el('li', null, [
           el('a', { href: M.dayUrl(date) }, [date.slice(0, 4)]),
           ' (' + ago + (ago === 1 ? ' year' : ' years') + ' ago)',
-          el('div', { class: 'note' }, [types.join(', ')])
+          el('div', { class: 'note' }, [byDate[date].join(', ')])
         ]));
       });
       out.appendChild(ul);
-    }).catch(failed(out, 'past years'));
+    },
+    today: function (entries) {
+      M.renderBento($('bento'), entries, {
+        maxRows: 3,
+        moreHref: M.dayUrl(today),
+        dayHref: function (e) { return M.dayUrl(e.entry_date); },
+        emptyText: 'Nothing yet today. A new page, waiting.'
+      });
+    }
+  };
+
+  // What a part shows when it never loaded at all.
+  var FAILED = {
+    last: function () { $('last-updated').textContent = '?'; },
+    dates: function () {},
+    quotes: function () {},
+    now: function () {},
+    otd: function () { message($('otd-list'), "couldn't load past years."); },
+    today: function () { message($('bento'), "Couldn't load today's entries. Check your connection and refresh."); }
+  };
+
+  function message(node, text) {
+    node.textContent = '';
+    node.appendChild(el('p', { class: 'note' }, [text]));
   }
 
-  // ---------- today's entries (bento grid) ----------
+  function show(part, value, owner) {
+    if (!owner && fromOwner[part]) return;   // never replace the owner's view with the public one
+    if (owner) fromOwner[part] = true;
+    state[part] = value;
+    shown[part] = true;
+    try { RENDER[part](value); } catch (e) { if (window.console) console.error(part, e); }
+  }
 
-  function loadTimeline(today) {
-    var out = $('bento');
-    return M.db.from('entries').select('*').eq('entry_date', today)
-      .order('created_at', { ascending: false })
-      .then(rows)
-      .then(function (entries) {
-        // The whole day as a bento grid that fits in one screen (3 rows).
-        M.renderBento(out, entries, {
-          maxRows: 3,
-          moreHref: M.dayUrl(today),
-          dayHref: function (e) { return M.dayUrl(e.entry_date); },
-          emptyText: 'Nothing yet today. A new page, waiting.'
-        });
-      })
-      .catch(failed(out, "today's entries"));
+  function notice(text) {
+    var n = $('notice');
+    n.textContent = text;
+    n.hidden = false;
+  }
+
+  // ---------- the owner's extras ----------
+
+  function loadOwnerView(owner) {
+    var jobs = PARTS.map(function (part) {
+      return FETCH[part](owner).then(function (v) { show(part, v, true); });
+    });
+    M.withTimeout(Promise.all(jobs), OWNER_TIMEOUT, 'login').then(function () {
+      return M.withTimeout(owner.auth.getSession(), 4000, 'login check');
+    }).then(function (res) {
+      if (!(res && res.data && res.data.session)) {
+        notice('Your login has expired, so private entries are hidden. Log in again on the post page.');
+      }
+    }).catch(function (err) {
+      if (window.console) console.warn('owner view', err);
+      notice("Couldn't check your login in time, so only public entries are shown. " +
+        'Refresh, or log in again on the post page.');
+    });
   }
 
   // ---------- start ----------
 
   document.addEventListener('DOMContentLoaded', function () {
-    // "Today" is always Manila's date, whatever timezone the visitor's device is in.
-    var today = M.manilaDate();
+    today = M.manilaDate();   // always Manila's date, whatever the device's timezone
     $('today-label').textContent = M.formatDate(today);
     M.reloadAtMidnight(today);
 
     if (!M.db) {
-      var notice = $('notice');
-      notice.textContent = M.configured
+      notice(M.configured
         ? "Couldn't load the Supabase library. Check your internet connection and refresh."
-        : 'Not connected to the database yet. Fill in js/config.js (see README).';
-      notice.hidden = false;
-      $('last-updated').textContent = '-';
-      $('bento').textContent = '';
-      $('otd-list').textContent = '';
+        : 'Not connected to the database yet. Fill in js/config.js (see README).');
+      FAILED.last(); FAILED.today(); message($('otd-list'), '-');
       return;
     }
 
-    var dates = loadDates(today);
-    loadLastUpdated();
-    loadQuote(today);
-    loadNow(dates);
-    loadOnThisDay(today);
-    loadTimeline(today);
+    // 1. instant: last seen data
+    PARTS.forEach(function (part) {
+      var cached = M.cache.get(cacheKey(part));
+      if (cached !== undefined) show(part, cached);   // only successful results are ever cached
+    });
+
+    // 2. fresh public data, all at once
+    PARTS.forEach(function (part) {
+      M.withTimeout(FETCH[part](M.db), PART_TIMEOUT, part).then(function (v) {
+        M.cache.set(cacheKey(part), v);
+        show(part, v);
+      }).catch(function (err) {
+        if (window.console) console.warn(part, err);
+        if (!shown[part]) FAILED[part]();
+      });
+    });
+
+    // 3. the owner's private extras, if logged in on this browser
+    var owner = M.ownerClient();
+    if (owner) loadOwnerView(owner);
   });
 })();

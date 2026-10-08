@@ -96,6 +96,8 @@
       'aria-label': 'enlarge photo' + (has(caption) ? ': ' + caption : '')
     }, [el('img', { src: url, alt: has(alt) ? alt : (has(caption) ? caption : 'photo'), loading: 'lazy' })]);
     if (has(caption)) b.setAttribute('data-caption', String(caption));
+    // A picture that can't load (dead link, offline) disappears instead of showing a broken box.
+    b.firstChild.addEventListener('error', function () { b.hidden = true; });
     return b;
   }
 
@@ -220,6 +222,7 @@
       if (has(d.title)) line.push(el('i', null, [d.title]));
       if (has(d.author)) line.push(' by ' + d.author);
       if (has(d.page)) line.push(', p. ' + d.page);
+      if (d.finished) line.push(' (finished)');
       return [line.length ? el('p', null, line) : null, para(d.note)];
     },
 
@@ -235,7 +238,7 @@
     goal: function (d) {
       return [
         el('p', null, [
-          d.done ? '[done] ' : null,
+          d.done ? '[done] ' : (d.dropped ? '[dropped] ' : null),
           has(d.text) ? d.text : null,
           has(d.target_date) ? ' (by ' + M.formatDate(d.target_date, { weekday: undefined, month: 'short' }) + ')' : null
         ]),
@@ -267,7 +270,8 @@
   }
 
   // One entry row -> one <article>.
-  M.renderEntry = function (entry) {
+  // opts.showDate: put the day (linked) before the time, for lists that span many days.
+  M.renderEntry = function (entry, opts) {
     var d = (entry.data && typeof entry.data === 'object') ? entry.data : {};
     var body = (BODIES.hasOwnProperty(entry.type) ? BODIES[entry.type] : function (x) { return [para(x.text || x.note)]; })(d, entry);
     var media = Array.isArray(entry.media) ? entry.media : [];
@@ -278,6 +282,8 @@
     }
     return el('article', { class: 'entry entry-' + entry.type }, [
       el('div', { class: 'entry-meta' }, [
+        opts && opts.showDate ? el('a', { href: M.dayUrl(entry.entry_date) }, [M.formatDate(entry.entry_date, { weekday: undefined, month: 'short' })]) : null,
+        opts && opts.showDate ? ' \u00B7 ' : null,
         M.formatTime(entry.created_at), ' · ',
         el('span', { class: 'kind' }, [entry.type]),
         entry.private ? el('span', { class: 'private' }, [' · private']) : null

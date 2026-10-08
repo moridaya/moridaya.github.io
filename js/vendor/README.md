@@ -9,3 +9,7 @@ the code that runs on this site.
 
 To check it: `npm pack @supabase/supabase-js@2.45.4`, unpack, and compare
 `sha256sum package/dist/umd/supabase.js` with the hash above.
+
+The `<script>` tags load it with Subresource Integrity (`integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o"`), so the
+browser refuses to run it if the file is ever changed. If you replace the file, update that
+hash on every page: `openssl dgst -sha384 -binary FILE | openssl base64 -A`.

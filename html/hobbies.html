@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; worker-src 'none'; manifest-src 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>archive - Moridaya</title>
+  <title>hobbies - Moridaya</title>
   <link rel="preload" href="../fonts/old-standard-tt-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="../fonts/im-fell-english-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://uxjsqgeynszqhkzzwvhd.supabase.co" crossorigin>
@@ -16,11 +16,13 @@
   <script defer src="../js/config.js"></script>
   <script defer src="../js/db.js"></script>
   <script defer src="../js/render.js"></script>
+  <script defer src="../js/lightbox.js"></script>
   <script defer src="../js/ribbon.js"></script>
-  <script defer src="../js/archive.js"></script>
+  <script defer src="../js/bento.js"></script>
+  <script defer src="../js/hobbies.js"></script>
   <script src="../js/theme.js"></script>
 </head>
-<body data-root="../" data-page="archive">
+<body data-root="../" data-page="hobbies">
 <div id="page">
 
   <header id="top">
@@ -28,18 +30,17 @@
       <button id="theme-toggle" type="button" aria-label="switch theme"></button>
     </div>
     <h1><a href="../index.html">Moridaya</a></h1>
-    <p class="subtitle">every day, newest first</p>
+    <p class="subtitle">everything, by tag</p>
   </header>
 
   <nav id="ribbon"></nav>
 
-  <main id="archive">
+  <main id="content">
     <p class="note">loading...</p>
   </main>
 
   <footer><a href="post.html">post</a></footer>
 
 </div>
-
 </body>
 </html>

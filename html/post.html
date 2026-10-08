@@ -3,13 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; worker-src 'none'; manifest-src 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="robots" content="noindex">
   <title>post - Moridaya</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&amp;family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&amp;display=swap">
+  <link rel="preload" href="../fonts/old-standard-tt-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/im-fell-english-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preconnect" href="https://uxjsqgeynszqhkzzwvhd.supabase.co" crossorigin>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="stylesheet" href="../css/style.css">
+  <script defer src="../js/vendor/supabase-2.45.4.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o"></script>
+  <script defer src="../js/config.js"></script>
+  <script defer src="../js/db.js"></script>
+  <script defer src="../js/render.js"></script>
+  <script defer src="../js/lightbox.js"></script>
+  <script defer src="../js/ribbon.js"></script>
+  <script defer src="../js/compress.js"></script>
+  <script defer src="../js/weather.js"></script>
+  <script defer src="../js/song-search.js"></script>
+  <script defer src="../js/post.js"></script>
+  <script defer src="../js/post-favorites.js"></script>
   <script src="../js/theme.js"></script>
 </head>
 <body data-root="../" data-page="post">
@@ -119,17 +133,45 @@
       <h2>Recent posts</h2>
       <div id="recent"><p class="note">loading...</p></div>
     </section>
+
+    <section class="box" id="fav-manager">
+      <h2>Favorites</h2>
+      <form id="fav-form" class="form">
+        <div class="field">
+          <label for="fav-cat">category</label>
+          <select id="fav-cat"></select>
+        </div>
+        <div class="field">
+          <label for="fav-name">new favorite</label>
+          <input type="text" id="fav-name" maxlength="200" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fav-why">why (one line, optional)</label>
+          <input type="text" id="fav-why" maxlength="300" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fav-since">my favorite since</label>
+          <input type="date" id="fav-since">
+        </div>
+        <div class="field">
+          <label for="fav-photo">photo (optional)</label>
+          <input type="file" id="fav-photo" accept="image/*">
+        </div>
+        <p><button type="submit" id="fav-save">set favorite</button>
+          <span class="note">the current one moves to "previously"</span></p>
+      </form>
+      <div id="fav-list"><p class="note">loading...</p></div>
+      <form id="fav-cat-form" class="form fav-cat-form">
+        <div class="field">
+          <label for="fav-new-cat">add a category</label>
+          <input type="text" id="fav-new-cat" maxlength="60" autocomplete="off">
+        </div>
+        <p><button type="submit">add category</button></p>
+      </form>
+    </section>
   </div>
 
 </div>
 
-<script src="../js/vendor/supabase-2.45.4.js"></script>
-<script src="../js/config.js"></script>
-<script src="../js/db.js"></script>
-<script src="../js/render.js"></script>
-<script src="../js/lightbox.js"></script>
-<script src="../js/ribbon.js"></script>
-<script src="../js/compress.js"></script>
-<script src="../js/post.js"></script>
 </body>
 </html>

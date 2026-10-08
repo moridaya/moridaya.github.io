@@ -3,12 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; worker-src 'none'; manifest-src 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>not found - Moridaya</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&amp;family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&amp;display=swap">
+  <link rel="preload" href="/fonts/old-standard-tt-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/im-fell-english-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="stylesheet" href="/css/style.css">
+  <script defer src="/js/ribbon.js"></script>
   <script src="/js/theme.js"></script>
 </head>
 <body data-root="/" data-page="404">
@@ -24,10 +27,16 @@
 
   <nav id="ribbon"></nav>
 
-  <p class="empty">This page was never written. Try the <a href="/index.html">home page</a> or the <a href="/html/archive.html">archive</a>.</p>
+  <main class="not-found">
+    <p class="big-404">404</p>
+    <h2 class="section-head">Not Found</h2>
+    <p>The requested page was not found on this server. It was never written, or it moved.</p>
+    <p>Try the <a href="/index.html">home page</a> or the <a href="/html/archive.html">archive</a>.</p>
+    <hr>
+    <p class="note"><i>Moridaya Server at moridaya.github.io Port 443</i></p>
+  </main>
 
 </div>
 
-<script src="/js/ribbon.js"></script>
 </body>
 </html>

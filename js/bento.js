@@ -123,7 +123,7 @@
     container.style.setProperty('--row', row + 'px');
   }
 
-  // opts: { maxRows (home only), moreHref, dayHref(entry), emptyText }
+  // opts: { maxRows (home only), moreHref, dayHref(entry), emptyText, showDate }
   M.renderBento = function (container, entries, opts) {
     opts = opts || {};
     container.textContent = '';
@@ -136,7 +136,7 @@
 
     var plan = M.planBento(entries, opts.maxRows);
     entries.slice(0, plan.shown).forEach(function (entry, i) {
-      var tile = M.renderEntry(entry);
+      var tile = M.renderEntry(entry, { showDate: opts.showDate });
       tile.className += ' tile ' + plan.sizes[i];
       if (/^\d+$/.test(String(entry.id))) {
         tile.id = 'e-' + entry.id;
