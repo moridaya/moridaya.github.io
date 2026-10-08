@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Moridaya</title>
+  <meta name="description" content="Moridaya: a public diary & archive of Deffoh.">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body data-root="" data-page="home">
+<div id="page">
+
+  <header id="top">
+    <div id="top-right">
+      <button id="theme-toggle" type="button" aria-label="switch theme"></button>
+      <div id="day-counter">DAY ----</div>
+    </div>
+    <h1><a href="index.html">Moridaya</a></h1>
+    <p class="subtitle">a public diary &amp; archive of Deffoh</p>
+    <p class="meta">last updated: <span id="last-updated">loading...</span></p>
+    <p class="meta" id="weather">Manila weather: loading...</p>
+  </header>
+
+  <nav id="ribbon"></nav>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <section id="qotd" class="box" hidden>
+    <h2>Quote of the day</h2>
+    <blockquote></blockquote>
+    <p class="source note"></p>
+  </section>
+
+  <div id="columns">
+    <aside id="left">
+      <section id="now" class="box" hidden>
+        <h2>Now</h2>
+        <table><tbody></tbody></table>
+      </section>
+      <section id="otd" class="box">
+        <h2>On this day</h2>
+        <div id="otd-list"><p class="note">loading...</p></div>
+      </section>
+    </aside>
+
+    <main id="right">
+      <h2>Today &middot; <span id="today-label"></span></h2>
+      <div id="timeline"><p class="note">loading...</p></div>
+    </main>
+  </div>
+
+  <footer>
+    <span id="visitor-line">visitors <span id="visitors" class="counter">------</span> &middot; </span>
+    <a href="html/post.html">post</a>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/db.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ribbon.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/counter.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>
