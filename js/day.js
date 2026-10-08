@@ -83,16 +83,17 @@
       nav.appendChild(navLink(newer, 'next day \u00BB'));
     }, null, 'archive:dates');
 
-    // Weather saved for that day, if any (public data).
-    M.withTimeout(M.db.from('day_weather').select('summary, temp_c').eq('weather_date', date).maybeSingle(), 12000, 'weather')
+    // Weather saved for that day, if any (public data): "Manila: high 32°C, light rain".
+    M.withTimeout(M.db.from('day_weather').select('summary, temp_c, data').eq('weather_date', date).maybeSingle(), 12000, 'weather')
       .then(function (res) {
         var w = res && res.data;
-        var hasTemp = w && w.temp_c !== null && w.temp_c !== undefined;
-        if (w && (w.summary || hasTemp)) {
-          facts.weather = 'Manila: ' + (hasTemp ? Math.round(w.temp_c) + '\u00B0C' : '') +
-            (w.summary ? (hasTemp ? ', ' : '') + w.summary : '');
-          showFacts();
-        }
+        if (!w) return;
+        var hasTemp = typeof w.temp_c === 'number' || (w.temp_c !== null && w.temp_c !== undefined && isFinite(Number(w.temp_c)));
+        var high = w.data && w.data.high_c !== undefined;
+        var bits = [];
+        if (hasTemp) bits.push((high ? 'high ' : '') + Math.round(Number(w.temp_c)) + '\u00B0C');
+        if (w.summary) bits.push(String(w.summary));
+        if (bits.length) { facts.weather = 'Manila: ' + bits.join(', '); showFacts(); }
       }).catch(function () { /* weather is a nice-to-have */ });
 
     // The entries themselves.

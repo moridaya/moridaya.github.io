@@ -26,6 +26,41 @@
     });
   };
 
+  // Save today's Manila weather once per day into day_weather (shown on that day's page).
+  // Runs from the posting page with the logged-in connection: only the owner may write
+  // weather, so visitors can't fill it with fake data. Saves the day's forecast high and
+  // overall condition the first time the posting page is opened that day.
+  M.WEATHER_DAY_URL = 'https://api.open-meteo.com/v1/forecast' +
+    '?latitude=14.5995&longitude=120.9842&timezone=Asia%2FManila&forecast_days=1' +
+    '&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min';
+
+  M.saveTodayWeather = async function (client) {
+    var today = M.manilaDate();
+    var KEY = 'moridaya-weather-saved';
+    try { if (localStorage.getItem(KEY) === today) return 'already saved'; } catch (e) { /* fine */ }
+    var have = await M.withTimeout(client.from('day_weather').select('weather_date').eq('weather_date', today).maybeSingle(), 10000, 'weather check');
+    if (have.error) throw have.error;
+    if (!have.data) {
+      var r = await (M.fetch || fetch)(M.WEATHER_DAY_URL);
+      if (!r.ok) throw new Error('weather ' + r.status);
+      var w = await r.json();
+      var d = w.daily || {};
+      if (!d.time || d.time[0] !== today) return 'forecast is for another day';
+      var res = await M.withTimeout(client.from('day_weather').upsert({
+        weather_date: today,
+        summary: M.weatherText(d.weather_code[0]),
+        temp_c: d.temperature_2m_max[0],
+        data: {
+          high_c: d.temperature_2m_max[0], low_c: d.temperature_2m_min[0], code: d.weather_code[0],
+          saved_at: new Date().toISOString(), current: w.current || null
+        }
+      }, { onConflict: 'weather_date', ignoreDuplicates: true }), 10000, 'weather save');
+      if (res.error) throw res.error;
+    }
+    try { localStorage.setItem(KEY, today); } catch (e) { /* fine */ }
+    return 'saved';
+  };
+
   document.addEventListener('DOMContentLoaded', function () {
     var line = document.getElementById('weather');
     if (!line) return;

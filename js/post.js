@@ -196,6 +196,7 @@
         ]));
       }
     });
+    if (type === 'song' && M.attachSongSearch) M.attachSongSearch(box);   // js/song-search.js
     var needsPhoto = TYPES[type].need.some(function (n) { return n === '@photos'; });
     $('photos-label').textContent = needsPhoto ? 'photos'
       : type === 'song' ? 'album cover picture (optional, shown small)' : 'photos (optional)';
@@ -630,6 +631,9 @@
     }
     await loadRecent();
     if (M.manageFavorites) M.manageFavorites();   // js/post-favorites.js
+    if (M.saveTodayWeather) {   // js/weather.js: today's Manila weather for the day page
+      M.saveTodayWeather(db).catch(function (err) { if (window.console) console.warn('weather', err); });
+    }
 
     // post.html?edit=123 opens that entry for editing
     var editId = new URLSearchParams(location.search).get('edit');

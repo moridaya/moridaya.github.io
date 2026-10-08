@@ -565,3 +565,16 @@ ul.shelf li { margin-bottom: 8px; overflow-wrap: anywhere; }
 @media (max-width: 640px) {
   .fav-grid { grid-template-columns: 1fr; }
 }
+
+/* song search on the posting page */
+.song-results { list-style: none; margin: 4px 0 0; padding: 0; }
+.song-results li { margin: 0 0 4px; }
+button.song-result {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  padding: 3px 6px; font-size: 15px; color: var(--text); border-color: var(--soft-rule);
+}
+button.song-result img { width: 40px; height: 40px; object-fit: cover; flex: 0 0 auto; }
+
+/* 404: old-web "Not Found" */
+.not-found .big-404 { margin: 16px 0 0; font-family: var(--font-mono); font-size: 64px; font-weight: bold; color: var(--navy); line-height: 1; }
+.not-found hr { border: 0; border-top: 1px solid var(--muted); margin: 18px 0 6px; }
