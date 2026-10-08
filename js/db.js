@@ -59,6 +59,28 @@
     });
   }
 
+  // ---------- safety nets ----------
+
+  // A broken piece of code or a failed request is logged quietly, never left to break the page.
+  window.addEventListener('unhandledrejection', function (e) {
+    if (window.console) console.warn('unhandled', e.reason);
+    e.preventDefault();
+  });
+  window.addEventListener('error', function (e) {
+    if (window.console) console.warn('error', e.message);
+  });
+
+  // Last resort: whatever still says "loading..." after 20 seconds gets a plain message.
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () {
+      Array.prototype.forEach.call(document.querySelectorAll('#page p.note, #page span'), function (n) {
+        if (n.children.length === 0 && /^\s*loading\.\.\.\s*$/.test(n.textContent)) {
+          n.textContent = "couldn't load. Refresh to try again.";
+        }
+      });
+    }, 20000);
+  });
+
   // ---------- two connections ----------
   //
   // M.db: for everything public. It never reads or refreshes the saved login, so the
