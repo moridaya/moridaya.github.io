@@ -177,7 +177,7 @@
       .order('created_at', { ascending: false })
       .then(rows)
       .then(function (entries) {
-        M.renderTimeline(out, entries, 'nothing posted yet today.');
+        M.renderTimeline(out, entries, 'Nothing yet today. A new page, waiting.');
       })
       .catch(failed(out, "today's entries"));
   }
@@ -185,8 +185,10 @@
   // ---------- start ----------
 
   document.addEventListener('DOMContentLoaded', function () {
+    // "Today" is always Manila's date, whatever timezone the visitor's device is in.
     var today = M.manilaDate();
     $('today-label').textContent = M.formatDate(today);
+    M.reloadAtMidnight(today);
 
     if (!M.db) {
       var notice = $('notice');

@@ -1,15 +1,19 @@
 // The [bracketed] menu. Lives here so changing the menu means editing one file, not every page.
+//
+// `ready: true` marks pages that exist. Anything else shows gray with "(soon)" and can't be
+// clicked. When a page gets built, the same change that adds it flips its flag to true here,
+// so "(soon)" disappears by itself the moment that update goes live.
 (function () {
   var ITEMS = [
-    ['home', 'index.html'],
-    ['archive', 'html/archive.html'],
-    ['hobbies', 'html/hobbies.html'],
-    ['bookshelf', 'html/bookshelf.html'],
-    ['quotes', 'html/quotes.html'],
-    ['goals', 'html/goals.html'],
-    ['places', 'html/places.html'],
-    ['random day', 'html/random.html'],
-    ['about', 'html/about.html']
+    { label: 'home', path: 'index.html', ready: true },
+    { label: 'archive', path: 'html/archive.html', ready: true },
+    { label: 'hobbies', path: 'html/hobbies.html' },
+    { label: 'bookshelf', path: 'html/bookshelf.html' },
+    { label: 'quotes', path: 'html/quotes.html' },
+    { label: 'goals', path: 'html/goals.html' },
+    { label: 'places', path: 'html/places.html' },
+    { label: 'random day', path: 'html/random.html' },
+    { label: 'about', path: 'html/about.html' }
   ];
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -20,15 +24,22 @@
 
     ITEMS.forEach(function (item) {
       var span = document.createElement('span');
-      span.className = 'item';
       var label;
-      if (item[0] === current) {
+      if (!item.ready) {
+        span.className = 'item soon';
+        span.setAttribute('aria-disabled', 'true');
+        label = document.createElement('span');
+        label.textContent = item.label + ' (soon)';
+      } else if (item.label === current) {
+        span.className = 'item';
         label = document.createElement('b');
+        label.textContent = item.label;
       } else {
+        span.className = 'item';
         label = document.createElement('a');
-        label.href = root + item[1];
+        label.href = root + item.path;
+        label.textContent = item.label;
       }
-      label.textContent = item[0];
       span.appendChild(document.createTextNode('['));
       span.appendChild(label);
       span.appendChild(document.createTextNode(']'));

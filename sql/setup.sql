@@ -14,7 +14,7 @@
 --
 -- Who can do what (enforced by the database itself, not by JavaScript):
 --   anyone   read entries that are not private, read weather,
---            bump the visitor counter
+--            add 1 to the visitor counter (but not see it)
 --   owner    everything: read private entries, post, edit, delete,
 --            upload and delete files
 -- =====================================================================
@@ -204,21 +204,23 @@ grant execute on function public.on_this_day(date)  to anon, authenticated;
 
 -- ---------------------------------------------------------------------
 -- 5. Visitor counter
---    Visitors can only add 1 or read the number, never set it.
+--    Visitors can only add 1, never set it or even read it: the number is
+--    only shown to the owner.
 -- ---------------------------------------------------------------------
 
-create or replace function public.bump_visits()
-returns bigint
+-- (dropped first because older versions returned the number to everyone)
+drop function if exists public.bump_visits();
+create function public.bump_visits()
+returns void
 language sql
 volatile
 security definer
 set search_path = ''
 as $$
-  update public.site_stats set value = value + 1
-  where key = 'visits'
-  returning value;
+  update public.site_stats set value = value + 1 where key = 'visits';
 $$;
 
+-- Returns the count for the owner, and nothing (null) for anyone else.
 create or replace function public.get_visits()
 returns bigint
 language sql
@@ -226,7 +228,8 @@ stable
 security definer
 set search_path = ''
 as $$
-  select value from public.site_stats where key = 'visits';
+  select case when public.is_owner() then value end
+  from public.site_stats where key = 'visits';
 $$;
 
 grant execute on function public.bump_visits() to anon, authenticated;

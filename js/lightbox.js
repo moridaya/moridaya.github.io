@@ -1,7 +1,8 @@
-// Image viewer: clicking a photo shows it big over the page instead of leaving the page.
-// Close it by clicking outside the photo, the [x] button, Esc, or the phone/browser back button.
+// Photo viewer: clicking a photo shows it enlarged over the page, with its caption under it.
+// Close it with the [x] button, Esc, clicking outside the photo, or the phone/browser back button.
+// It never opens a new tab and never shows the file's name or address.
 (function () {
-  var box, img, closeBtn, lastFocus, pushed = false;
+  var box, figure, img, caption, closeBtn, lastFocus, pushed = false;
 
   function build() {
     box = document.createElement('div');
@@ -15,26 +16,36 @@
     closeBtn.type = 'button';
     closeBtn.className = 'lightbox-close';
     closeBtn.textContent = '[x] close';
+    closeBtn.setAttribute('aria-label', 'close photo');
 
+    figure = document.createElement('figure');
     img = document.createElement('img');
-    img.alt = '';
+    caption = document.createElement('figcaption');
+    figure.appendChild(img);
+    figure.appendChild(caption);
 
     box.appendChild(closeBtn);
-    box.appendChild(img);
+    box.appendChild(figure);
     document.body.appendChild(box);
 
-    // Clicking the dark area (anything but the photo itself) closes.
-    box.addEventListener('click', function (e) { if (e.target !== img) close(); });
+    // Anything outside the photo and its caption closes the viewer.
+    box.addEventListener('click', function (e) {
+      if (e.target === img || e.target === caption) return;
+      close();
+    });
   }
 
-  function open(url) {
+  function open(src, alt, text) {
     if (!box) build();
     lastFocus = document.activeElement;
-    img.src = url;
+    img.src = src;
+    img.alt = alt || '';
+    caption.textContent = text || '';
+    caption.hidden = !text;
     box.hidden = false;
     document.documentElement.classList.add('lightbox-open');
     closeBtn.focus();
-    // An extra history step, so the back button closes the photo instead of leaving the page.
+    // One extra history step, so the back button closes the photo instead of leaving the page.
     try { history.pushState({ lightbox: true }, ''); pushed = true; } catch (e) { pushed = false; }
   }
 
@@ -48,7 +59,7 @@
 
   function close() {
     if (!box || box.hidden) return;
-    if (pushed) { pushed = false; history.back(); }   // popstate below does the hiding
+    if (pushed) { pushed = false; history.back(); }   // the popstate below does the hiding
     else hide();
   }
 
@@ -59,11 +70,11 @@
   });
 
   document.addEventListener('click', function (e) {
-    // Normal click only; ctrl/cmd/middle click still opens the photo in a new tab.
-    if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-    var link = e.target.closest && e.target.closest('a.zoom');
-    if (!link) return;
+    var btn = e.target.closest && e.target.closest('button.zoom');
+    if (!btn) return;
+    var pic = btn.querySelector('img');
+    if (!pic) return;
     e.preventDefault();
-    open(link.href);
+    open(pic.currentSrc || pic.src, pic.alt, btn.getAttribute('data-caption'));
   });
 })();
