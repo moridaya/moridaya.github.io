@@ -12,6 +12,7 @@
   --counter-bg: #000000;
   --counter-fg: #33ff33;
   --private: #b00000;
+  color-scheme: light;
 }
 
 :root[data-theme="dark"] {
@@ -26,6 +27,7 @@
   --counter-bg: #000000;
   --counter-fg: #33ff33;
   --private: #ff7070;
+  color-scheme: dark;   /* browser-drawn bits (date pickers, file buttons) go dark too */
 }
 
 html {
@@ -254,3 +256,52 @@ footer {
   border: 1px solid var(--muted);
   vertical-align: middle;
 }
+
+/* ---------- forms (posting page) ---------- */
+
+.form .field { margin-bottom: 10px; }
+.form label {
+  display: block;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 12px;
+  color: var(--navy);
+  margin-bottom: 2px;
+}
+.form .check label { color: var(--text); font-size: 13px; }
+
+input[type="text"], input[type="email"], input[type="password"], input[type="url"],
+input[type="number"], input[type="date"], input[type="datetime-local"], select, textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 4px 5px;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 16px;   /* 16px stops iPhones from zooming in on tap */
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--muted);
+  border-radius: 0;
+}
+input[type="file"] { max-width: 100%; font-size: 13px; }
+textarea { resize: vertical; }
+
+button {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 16px;
+  padding: 3px 12px;
+  background: var(--bg);
+  color: var(--navy);
+  border: 1px solid var(--navy);
+  border-radius: 0;
+  cursor: pointer;
+}
+button:disabled { color: var(--muted); border-color: var(--muted); cursor: wait; }
+button.small { font-family: Verdana, Geneva, sans-serif; font-size: 11px; padding: 0 5px; }
+
+.notice.ok { border-style: solid; }
+.notice.error { border: 1px solid var(--private); color: var(--private); }
+
+.existing { margin-top: 4px; }
+
+ul.recent { margin: 0; padding-left: 18px; }
+ul.recent li { margin-bottom: 5px; }
