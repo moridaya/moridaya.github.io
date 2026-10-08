@@ -96,6 +96,8 @@
       'aria-label': 'enlarge photo' + (has(caption) ? ': ' + caption : '')
     }, [el('img', { src: url, alt: has(alt) ? alt : (has(caption) ? caption : 'photo'), loading: 'lazy' })]);
     if (has(caption)) b.setAttribute('data-caption', String(caption));
+    // A picture that can't load (dead link, offline) disappears instead of showing a broken box.
+    b.firstChild.addEventListener('error', function () { b.hidden = true; });
     return b;
   }
 

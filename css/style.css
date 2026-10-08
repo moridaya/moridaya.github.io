@@ -578,3 +578,7 @@ button.song-result img { width: 40px; height: 40px; object-fit: cover; flex: 0 0
 /* 404: old-web "Not Found" */
 .not-found .big-404 { margin: 16px 0 0; font-family: var(--font-mono); font-size: 64px; font-weight: bold; color: var(--navy); line-height: 1; }
 .not-found hr { border: 0; border-top: 1px solid var(--muted); margin: 18px 0 6px; }
+button.zoom[hidden] { display: none; }
+@media (max-width: 640px) {
+  .not-found { text-align: center; }
+}

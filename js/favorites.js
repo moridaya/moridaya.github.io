@@ -20,6 +20,7 @@
       el('img', { src: M.mediaUrl(f.photo), alt: f.name, loading: 'lazy' })
     ]);
     b.setAttribute('data-caption', f.name + (f.why ? ' — ' + f.why : ''));
+    b.firstChild.addEventListener('error', function () { b.hidden = true; });   // dead photo link: hide it
     return b;
   }
 
