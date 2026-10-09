@@ -38,12 +38,16 @@
       return c.rpc('entry_dates').then(M.rows);
     },
     quotes: function (c) {
-      return c.from('entries').select('id, text:data->>text, source:data->>source')
-        .eq('type', 'quote').order('id').then(M.rows);
+      return c.from('quotes').select('id, text, source').order('id').then(M.rows);   // the quotes tab
     },
     now: function (c) {
-      return Promise.all([latest(c, 'reading', 10), latest(c, 'body', 30), latest(c, 'fasting'),
-        latest(c, 'learned'), latest(c, 'goal', 30)]).then(function (r) {
+      // reading and goal come from their own tabs (books, goals), the rest from daily posts
+      var book = c.from('books').select('title, author').eq('status', 'reading')
+        .order('started_on', { ascending: false }).limit(1).then(M.rows).catch(function () { return []; });
+      var goal = c.from('goals').select('title').eq('status', 'active')
+        .order('started_on', { ascending: false }).limit(1).then(M.rows).catch(function () { return []; });
+      return Promise.all([book, latest(c, 'body', 30), latest(c, 'fasting'),
+        latest(c, 'learned'), goal]).then(function (r) {
         return { reading: r[0], body: r[1], fasting: r[2], learned: r[3], goal: r[4] };
       });
     },
@@ -105,14 +109,12 @@
     now: function (n) {
       var box = $('now'), tbody = box.querySelector('tbody');
       tbody.textContent = '';
-      var reading = null;   // the latest book not marked finished
-      (n.reading || []).some(function (r) { var d = r.data || {}; if (d.title && !d.finished) { reading = d; return true; } return false; });
+      var reading = (n.reading || [])[0] || null;   // the latest book still being read (bookshelf tab)
       var weight = firstWith(n.body, 'weight_kg');
       var height = firstWith(n.body, 'height_cm');
       var fast = n.fasting[0] && n.fasting[0].data;
       var learned = n.learned[0] && n.learned[0].data;
-      var goal = null;
-      (n.goal || []).some(function (g) { var d = g.data || {}; if (d.text && !d.done && !d.dropped) { goal = d; return true; } return false; });
+      var goal = (n.goal || [])[0] || null;         // the latest active goal (goals tab)
       var streak = state.dates ? streakFrom(state.dates) : 0;
 
       var list = [];
@@ -122,7 +124,7 @@
       var win = fast && M.fastingWindow(fast);
       if (win) list.push(['fasting', [win]]);
       if (learned && learned.topic) list.push(['learning', [M.link(learned.wikipedia_url, learned.topic) || learned.topic]]);
-      if (goal) list.push(['goal', [goal.text]]);
+      if (goal && goal.title) list.push(['goal', [el('a', { href: 'html/goals.html' }, [goal.title])]]);
       if (streak > 0) list.push(['streak', [streak + (streak === 1 ? ' day' : ' days')]]);
       list.forEach(function (row) {
         tbody.appendChild(el('tr', null, [el('th', null, [row[0]]), el('td', null, row[1])]));

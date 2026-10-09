@@ -54,17 +54,6 @@
       ],
       need: ['title']
     },
-    quote: { fields: [f('text', 'quote', 'textarea', { rows: 3 }), f('source', 'who said it')], need: ['text'] },
-    reading: {
-      fields: [
-        f('title', 'book title'),
-        f('author', 'author'),
-        f('page', 'page I\'m on (optional)', 'number', { step: '1' }),
-        f('finished', 'finished this book', 'checkbox'),
-        f('note', 'note')
-      ],
-      need: ['title']
-    },
     body: {
       fields: [
         f('weight_kg', 'weight (kg)', 'number', { step: '0.1' }),
@@ -74,16 +63,6 @@
       need: [['weight_kg', 'height_cm']]
     },
     food: { fields: [f('text', 'what I ate', 'textarea', { rows: 3 })], need: [['text', '@photos']] },
-    goal: {
-      fields: [
-        f('text', 'goal', 'textarea', { rows: 2 }),
-        f('target_date', 'by when (optional)', 'date'),
-        f('done', 'done', 'checkbox'),
-        f('dropped', 'dropped (gave up on it)', 'checkbox'),
-        f('closed_on', 'date done or dropped (optional)', 'date')
-      ],
-      need: ['text']
-    },
     mood: { fields: [f('mood', 'mood (a word)'), f('note', 'note')], need: ['mood'] }
   };
 

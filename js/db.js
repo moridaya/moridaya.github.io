@@ -240,5 +240,4 @@
   M.root = function () { return document.body.getAttribute('data-root') || ''; };
 
   M.dayUrl = function (dateStr) { return M.root() + 'html/day.html?date=' + dateStr; };
-  M.tagUrl = function (tag) { return M.root() + 'html/hobbies.html?tag=' + encodeURIComponent(tag); };
 })();

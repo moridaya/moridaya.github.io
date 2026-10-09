@@ -135,7 +135,7 @@ README.md has the setup steps and the entry field reference; this file has the r
   link). No archive list or hobby list on the home page.
 - **Bento grid** (`js/bento.js`), used on home and day pages:
   - 4 columns, `grid-auto-flow: dense`, no visible boxes (spacing + the small label line).
-  - Sizes: S 1x1 = song, quote, mood, body, goal, reading; M 2x1 = run, fasting, thought,
+  - Sizes: S 1x1 = song, mood, body; M 2x1 = run, fasting, thought,
     food, other; L 2x2 = photo, learned, anything with a picture/video, any text over 280
     characters; XL 4x2 = when the day has exactly one entry.
   - Home must fit one screen: 3 rows whose height follows the window. Too much: shrink
@@ -169,11 +169,24 @@ README.md has the setup steps and the entry field reference; this file has the r
   list and in the manage box; editing fixes a favorite in place (name, why, since, until for
   past ones, photo replace/remove) without creating history. "Set a new favorite" is what
   moves the old one to "previously".
-- **Hobbies**: every tag with its count; `hobbies.html?tag=x` shows that tag's entries as a
-  bento grid with dates (`showDate`). **Quotes**: every quote, newest first.
-  **Bookshelf**: built from reading entries; same title (ignoring case) = one book;
-  finished once any entry has `finished`; pages logged = sum of each book's highest page.
-  **Goals**: active / done / dropped from goal entries (`done`, `dropped`, `closed_on`).
+- **Bookshelf, quotes, goals, hobbies are their own things, NOT daily posts** (his rule:
+  avoid redundancy; anything else on a daily post goes under "thought"). Each has its own
+  table (`sql/005_tabs.sql`: `books`, `quotes`, `goals`, `hobbies`), is managed on its own tab
+  in an owner-only "Manage ..." box, and never shows in the daily feed. The daily form has no
+  reading/quote/goal types anymore; 005 moved the old ones into the tables.
+  Shared engine: `js/collection.js` (`M.collection({...})`: fields, toRow/fromRow, render
+  with ctx.owner/edit/save); each page script only describes its form and its own layout:
+  - **Bookshelf**: title, author, cover (2:3, 92x138), reading/finished, started/finished,
+    thoughts (in a `<details>`). Covers on a shelf grid, "Reading now" then "Finished";
+    no cover = a navy spine with the title.
+  - **Quotes**: the line + who said it, no explanation. Big centered lines, newest first.
+  - **Goals**: title, steps (jsonb `[{text, done}]`, a checklist; the owner ticks steps right
+    on the page), how I feel right now (+ updated date), status working on it/done/dropped.
+    Text progress bar (▰▱). Sections by status.
+  - **Hobbies**: name, photo (square), why I love it, since. Card grid. Tags on daily posts
+    are now plain labels (no hobby links).
+  - The home NOW box reads "reading" from `books` and "goal" from `goals`; quote of the day
+    comes from `quotes`.
   **About**: static placeholder text he fills in himself.
 - Phones (< 640px): header, title, ribbon, day counter and theme button are centered;
   entry text stays left-aligned.
@@ -193,8 +206,9 @@ README.md has the setup steps and the entry field reference; this file has the r
 
 ## Data
 
-- One table `entries` (see README "Entry fields" for each type's `data`), plus
-  `day_weather`, `site_owner`, `site_stats`. Helper RPCs: `entry_dates()`, `tag_counts()`,
+- One table `entries` for daily posts (see README "Entry fields"), plus `day_weather`,
+  `site_owner`, `site_stats`, the favorites tables (004) and the tab tables (005: `books`,
+  `quotes`, `goals`, `hobbies`). Helper RPCs: `entry_dates()`, `tag_counts()`,
   `on_this_day(d)`, `bump_visits()`, `get_visits()`.
 - `media` holds storage paths (`YYYY/MM/DD/<random>.jpg`) or YouTube links. Videos are
   YouTube links only (embedded via youtube-nocookie).

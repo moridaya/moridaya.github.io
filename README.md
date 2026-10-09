@@ -160,6 +160,20 @@ In Supabase go to **Authentication > Users**, open your user, and delete
 the authenticator factor. Then log in with just your password and set
 2-step login up again on your new phone.
 
+## Tabs with their own things
+
+Books, quotes, goals, hobbies and favorites are **not daily posts**. Each has its own table
+and is added, edited and deleted on its own tab, in a "manage" box only you see while
+logged in. They never show up in the daily feed.
+
+| tab | table | fields |
+| --- | --- | --- |
+| bookshelf | `books` | title, author, cover photo, status (reading / finished), started, finished on, my thoughts |
+| quotes | `quotes` | the line, who said it, saved on |
+| goals | `goals` | title, steps (a checklist you can tick on the page), how I feel right now, status (working on it / done / dropped), started, done or dropped on |
+| hobbies | `hobbies` | name, photo, why I love it, since when |
+| favorites | `favorite_categories`, `favorites` | see the favorites page |
+
 ## Entry fields
 
 Every post is one row in the `entries` table. The common columns are
@@ -174,11 +188,8 @@ in `data`:
 | run | `distance_km`, `minutes`, `note` |
 | photo | `caption` (photos themselves go in `media`) |
 | song | `title`, `artist`, `album_art` (image link), `spotify_url` (optional) |
-| quote | `text`, `source` |
-| reading | `title`, `author`, `page` (optional), `finished` (true/false), `note` |
 | body | `weight_kg`, `height_cm` (either or both) |
 | food | `text` (photos go in `media`) |
-| goal | `text`, `target_date` (optional), `done` (true/false), `dropped` (true/false), `closed_on` (date done/dropped, optional) |
 | mood | `mood` (a word), `note` |
 
 `media` holds storage paths (like `2026/10/08/x7k2.jpg`) or YouTube links.

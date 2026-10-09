@@ -1,30 +1,36 @@
-// Quotes: every saved quote, newest first.
+// Quotes: just the line and who said it. No explanations. Shown big, one at a time down the
+// page, newest first. Managed on this page; not daily posts.
 (function () {
   var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
 
-  document.addEventListener('DOMContentLoaded', function () {
-    var out = document.getElementById('content');
-    function say(text, cls) { out.textContent = ''; out.appendChild(el('p', { class: cls || 'empty' }, [text])); }
-    if (!M.db) { say('Not connected to the database yet.', 'note'); return; }
-    M.layered(function (c) {
-      return c.from('entries').select('id, entry_date, private, text:data->>text, source:data->>source')
-        .eq('type', 'quote').order('entry_date', { ascending: false }).order('created_at', { ascending: false })
-        .then(M.rows);
-    }, function (rows) {
-      rows = (rows || []).filter(function (q) { return q.text; });
-      out.textContent = '';
-      if (!rows.length) { say('No quotes saved yet.'); return; }
-      rows.forEach(function (q) {
-        out.appendChild(el('div', { class: 'quote-item' }, [
+  M.collection({
+    table: 'quotes',
+    select: 'id, text, source, saved_on',
+    order: function (q) { return q.order('saved_on', { ascending: false }).order('id', { ascending: false }); },
+    noun: 'quote',
+    cacheKey: 'quotes-v2',
+    empty: 'No quotes saved yet.',
+    fields: [
+      { name: 'text', label: 'the line', kind: 'textarea', rows: 3, required: true, max: 600 },
+      { name: 'source', label: 'who said it', max: 200 },
+      { name: 'saved_on', label: 'saved on', kind: 'date', today: true }
+    ],
+    toRow: function (v) { return { text: v.text, source: v.source, saved_on: v.saved_on || M.manilaDate() }; },
+    summary: function (q) { return '“' + (q.text.length > 60 ? q.text.slice(0, 57) + '...' : q.text) + '”'; },
+    render: function (out, rows, ctx) {
+      out.appendChild(el('div', { class: 'quote-wall' }, rows.map(function (q) {
+        var edit = null;
+        if (ctx.owner) { edit = el('button', { type: 'button', class: 'small' }, ['edit']); edit.addEventListener('click', function () { ctx.edit(q); }); }
+        return el('figure', { class: 'quote-card' }, [
           el('blockquote', null, ['“' + q.text + '”']),
-          el('p', { class: 'note' }, [
-            q.source ? '— ' + q.source + ' · ' : null,
-            el('a', { href: M.dayUrl(q.entry_date) }, ['saved ' + M.formatDate(q.entry_date, { weekday: undefined, month: 'short' })]),
-            q.private ? ' · private' : null
+          el('figcaption', null, [
+            q.source ? el('span', { class: 'quote-source' }, ['— ' + q.source]) : null,
+            el('span', { class: 'note' }, [' ' + M.shortDate(q.saved_on)]),
+            edit ? ' ' : null, edit
           ])
-        ]));
-      });
-    }, function () { say("Couldn't load quotes. Check your connection and refresh.", 'note'); }, 'quotes');
+        ]);
+      })));
+    }
   });
 })();

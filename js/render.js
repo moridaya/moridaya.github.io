@@ -261,11 +261,8 @@
 
   function tagsLine(tags) {
     if (!Array.isArray(tags) || !tags.length) return null;
-    var kids = ['tags: '];
-    tags.forEach(function (t, i) {
-      if (i) kids.push(', ');
-      kids.push(el('a', { href: M.tagUrl(t) }, [t]));
-    });
+    // plain labels (hobbies have their own tab now, so tags don't link anywhere)
+    var kids = ['tags: ' + tags.filter(function (t) { return typeof t === 'string'; }).join(', ')];
     return el('div', { class: 'tags' }, kids);
   }
 
