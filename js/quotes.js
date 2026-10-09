@@ -1,6 +1,6 @@
 // Quotes: every saved quote, newest first.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
 
   document.addEventListener('DOMContentLoaded', function () {

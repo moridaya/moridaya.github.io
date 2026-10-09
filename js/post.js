@@ -3,7 +3,7 @@
 // This page only makes the form. What's actually allowed is decided by the database
 // rules (sql/setup.sql): if someone else got past the login, every save would be refused.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
   function $(id) { return document.getElementById(id); }
 
@@ -524,7 +524,7 @@
   // Supabase's side (its own rate limits, plus 2-step login), which nobody can switch off
   // from the browser.
 
-  var GUARD_KEY = 'moridaya-login-guard';
+  var GUARD_KEY = 'moriyada-login-guard';
   var MAX_TRIES = 3;
   var FIRST_LOCK_MIN = 15;
   var MAX_LEVEL = 6;   // 15 min * 2^5 = 8 h
@@ -705,7 +705,7 @@
     var leftovers = ((existing.data && existing.data.all) || []).filter(function (f) { return f.status !== 'verified'; });
     for (var i = 0; i < leftovers.length; i++) await db.auth.mfa.unenroll({ factorId: leftovers[i].id });
 
-    var res = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Moridaya ' + Date.now() });
+    var res = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Moriyada ' + Date.now() });
     $('mfa-start').disabled = false;
     if (res.error) { status("Couldn't start 2-step setup: " + explain(res.error), 'error'); return; }
     enrolling = res.data.id;

@@ -1,8 +1,8 @@
 // Supabase connections (with time limits), a small cache, and date helpers shared by every page.
-// Everything hangs off one global, window.Moridaya, to keep names from clashing.
+// Everything hangs off one global, window.Moriyada, to keep names from clashing.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
-  var cfg = window.MORIDAYA_CONFIG || {};
+  var M = window.Moriyada = window.Moriyada || {};
+  var cfg = window.MORIYADA_CONFIG || {};
 
   M.configured = Boolean(
     cfg.supabaseUrl && cfg.supabaseAnonKey &&
@@ -94,7 +94,7 @@
 
   M.db = (M.configured && window.supabase)
     ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'moridaya-public' },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'moriyada-public' },
         global: { fetch: fetchWithTimeout }
       })
     : null;
@@ -121,7 +121,7 @@
   // ---------- small cache, so a refresh shows the last data instantly ----------
   // Only public data is ever cached (never private entries).
 
-  var CACHE_PREFIX = 'moridaya:cache:v1:';
+  var CACHE_PREFIX = 'moriyada:cache:v1:';
   M.cache = {
     get: function (key) {
       try {

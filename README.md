@@ -1,4 +1,6 @@
-# Moridaya
+# Moriyada
+
+*Read it backward by syllable: mo-ri-ya-da → da-ya-ri mo, "your diary."*
 
 A public diary and life archive of Deffoh. Anyone can read it. Only Deffoh can post.
 
@@ -143,7 +145,7 @@ These settings live in Supabase, not in this code, so only you can change them.
    on Supabase's servers per internet connection, and nobody can switch it
    off from a browser.
 4. **Authentication > URL Configuration**: set Site URL to
-   `https://moridaya.github.io`.
+   `https://moriyada.github.io`.
 5. **Use a long password** you don't use anywhere else (a 4-5 word phrase
    is great), then **turn on 2-step login** from the posting page.
 6. **Advisors > Security Advisor**: click "Rerun linter". It should show no

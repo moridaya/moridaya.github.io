@@ -3,8 +3,8 @@
 // owner, logged in, can see the number: the database refuses to tell anyone else.
 // Visitors use the public connection; only a browser with a saved login asks for the number.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
-  var KEY = 'moridaya-counted';
+  var M = window.Moriyada = window.Moriyada || {};
+  var KEY = 'moriyada-counted';
 
   function alreadyCounted() {
     try { return sessionStorage.getItem(KEY) === '1'; } catch (e) { return false; }

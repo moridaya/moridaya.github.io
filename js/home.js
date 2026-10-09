@@ -8,7 +8,7 @@
 //    logged-in connection to add private entries. If that fails or times out, the public
 //    page stays and a short note says why. It can never block the page.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
   function $(id) { return document.getElementById(id); }
 
