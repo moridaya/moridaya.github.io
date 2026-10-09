@@ -1,8 +1,8 @@
-// The [bracketed] menu, plus a little easter egg on the site title. Lives here so changing the menu means editing one file, not every page.
+// The menu (plain spaced links; the current page is underlined), plus a little easter egg on the site title. Lives here so changing the menu means editing one file, not every page.
 //
-// `ready: true` marks pages that exist. Anything else shows gray with "(soon)" and can't be
+// `ready: true` marks pages that exist. Anything else shows faded with a small "soon" and can't be
 // clicked. When a page gets built, the same change that adds it flips its flag to true here,
-// so "(soon)" disappears by itself the moment that update goes live.
+// so "soon" disappears by itself the moment that update goes live.
 (function () {
   var ITEMS = [
     { label: 'home', path: 'index.html', ready: true },
@@ -43,28 +43,28 @@
     var current = document.body.getAttribute('data-page');
 
     ITEMS.forEach(function (item) {
-      var span = document.createElement('span');
-      var label;
+      var node;
       if (!item.ready) {
-        span.className = 'item soon';
-        span.setAttribute('aria-disabled', 'true');
-        label = document.createElement('span');
-        label.textContent = item.label + ' (soon)';
+        // not built yet: faded, not clickable, with a small "soon" tag
+        node = document.createElement('span');
+        node.className = 'item soon';
+        node.setAttribute('aria-disabled', 'true');
+        node.textContent = item.label;
+        var tag = document.createElement('small');
+        tag.textContent = 'soon';
+        node.appendChild(tag);
       } else if (item.label === current) {
-        span.className = 'item';
-        label = document.createElement('b');
-        label.textContent = item.label;
+        node = document.createElement('span');
+        node.className = 'item current';
+        node.setAttribute('aria-current', 'page');
+        node.textContent = item.label;
       } else {
-        span.className = 'item';
-        label = document.createElement('a');
-        label.href = root + item.path;
-        label.textContent = item.label;
+        node = document.createElement('a');
+        node.className = 'item';
+        node.href = root + item.path;
+        node.textContent = item.label;
       }
-      span.appendChild(document.createTextNode('['));
-      span.appendChild(label);
-      span.appendChild(document.createTextNode(']'));
-      nav.appendChild(span);
-      nav.appendChild(document.createTextNode(' '));
+      nav.appendChild(node);
     });
   });
 })();

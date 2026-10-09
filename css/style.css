@@ -140,15 +140,37 @@ img { max-width: 100%; height: auto; }
 /* ---------- ribbon menu ---------- */
 
 #ribbon {
-  margin: 10px 0 14px;
-  padding: 5px 0;
-  border-top: 2px solid var(--rule);
-  border-bottom: 2px solid var(--rule);
-  text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 30px;
+  margin: 12px 0 18px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
   font-size: 16px;
+  letter-spacing: 0.3px;
 }
-#ribbon .item { white-space: nowrap; margin: 0 2px; }
-#ribbon .soon { color: var(--muted); opacity: 0.7; cursor: default; }
+#ribbon .item {
+  white-space: nowrap;
+  padding: 2px 0;
+  border-bottom: 2px solid transparent;
+  color: var(--text);
+  text-decoration: none;
+}
+#ribbon a.item:visited { color: var(--text); }
+#ribbon a.item:hover,
+#ribbon a.item:focus-visible { color: var(--navy); border-bottom-color: var(--soft-rule); }
+#ribbon .current { color: var(--navy); font-weight: bold; border-bottom-color: var(--navy); }
+#ribbon .soon { color: var(--muted); opacity: 0.6; cursor: default; }
+#ribbon .soon small {
+  margin-left: 4px;
+  font-family: var(--font-meta);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  vertical-align: super;
+}
 
 /* ---------- boxes ---------- */
 
@@ -197,7 +219,7 @@ img { max-width: 100%; height: auto; }
   #top-right { position: static; margin: 0 0 6px; display: flex; justify-content: center; gap: 12px; align-items: center; }
   #day-counter { margin-top: 0; }
   #top h1 { font-size: 32px; }
-  #ribbon { text-align: center; }
+  #ribbon { gap: 4px 20px; font-size: 15px; }
   .section-head { text-align: center; }
   .day-box { justify-content: center; text-align: center; }
 }
