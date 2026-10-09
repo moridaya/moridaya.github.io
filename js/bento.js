@@ -16,7 +16,7 @@
 
   var COLS = 4;
   var SIZES = { S: [1, 1], M: [2, 1], L: [2, 2], XL: [4, 2] };
-  var SMALL = { song: 1, quote: 1, mood: 1, body: 1, goal: 1, reading: 1 };
+  var SMALL = { song: 1, mood: 1, body: 1 };
   var BIG = { photo: 1, learned: 1 };
 
   function hasPicture(entry) {
@@ -38,7 +38,6 @@
     if (BIG[entry.type] || hasPicture(entry)) return 'L';
     // Long text gets a wide tile, so it spreads sideways instead of stretching its row.
     if (textLength(entry) > 280) return 'L';
-    if (entry.type === 'quote' && textLength(entry) > 160) return 'M';
     if (SMALL[entry.type]) return 'S';
     return 'M';
   };
