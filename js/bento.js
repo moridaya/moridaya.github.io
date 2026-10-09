@@ -11,7 +11,7 @@
 // should fit in one screen (3 rows): if it doesn't, the oldest tiles shrink first
 // (text before pictures), and only then the newest ones are kept with a "more from today" tile.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
 
   var COLS = 4;

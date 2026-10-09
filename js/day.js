@@ -1,7 +1,7 @@
 // Day page: day.html?date=YYYY-MM-DD shows that day's entries the same way the home page
 // does. One page serves every date, so new days work automatically.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
   function $(id) { return document.getElementById(id); }
 
@@ -44,7 +44,7 @@
     }
 
     var nice = M.formatDate(date);
-    document.title = nice + ' - Moridaya';
+    document.title = nice + ' - Moriyada';
     $('day-title').textContent = nice;
     $('day-heading').textContent = date === today ? 'Today' : M.formatDate(date, { weekday: undefined, month: 'short' });
 

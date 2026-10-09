@@ -1,11 +1,12 @@
 // Dark mode toggle. Loaded in <head> so the page never flashes the wrong colors.
 // The choice is remembered in localStorage; with nothing saved, it follows the phone/PC setting.
 (function () {
-  var KEY = 'moridaya-theme';
+  var KEY = 'moriyada-theme';
   var root = document.documentElement;
 
   function saved() {
-    try { return localStorage.getItem(KEY); } catch (e) { return null; }
+    // (also reads the key from before the site was renamed, so nobody's choice resets)
+    try { return localStorage.getItem(KEY) || localStorage.getItem('moridaya-theme'); } catch (e) { return null; }
   }
   function remember(value) {
     try { localStorage.setItem(KEY, value); } catch (e) { /* private mode etc: just don't remember */ }

@@ -2,7 +2,7 @@
 // in title, artist and album art (a 600px version). Everything stays editable, and if the
 // search can't be reached the form still works by typing the song in by hand.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
 
   var API = 'https://itunes.apple.com/search?media=music&entity=song&limit=6&country=PH&term=';

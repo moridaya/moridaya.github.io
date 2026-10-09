@@ -1,7 +1,13 @@
-# Moridaya: notes for Claude
+# Moriyada: notes for Claude
 
-Moridaya is Deffoh's public diary and life archive: what he did each day (thoughts,
+Moriyada is Deffoh's public diary and life archive: what he did each day (thoughts,
 things learned, fasting, runs, photos, songs...). Anyone can read it. Only he can post.
+
+**The name:** read it backward by syllable. mo-ri-ya-da becomes "da-ya-ri mo", which
+means "your diary" (dayari mo). Hovering or tapping the site title shows "dayari mo" (an
+easter egg in `js/ribbon.js`: CSS `::after` from `data-egg` on hover; on touch screens the
+first tap shows it and the second tap follows the link). The site was called "Moridaya"
+before the GitHub org and repo were renamed to `moriyada/moriyada.github.io`.
 README.md has the setup steps and the entry field reference; this file has the rules.
 
 ## Working with Deffoh
@@ -20,12 +26,12 @@ README.md has the setup steps and the entry field reference; this file has the r
 ## Stack and layout
 
 - Plain HTML, CSS, JavaScript. No framework, no build step, no npm at runtime.
-- GitHub Pages from `main` (repo `moridaya/moridaya.github.io`). Supabase (free tier) for
+- GitHub Pages from `main` (repo `moriyada/moriyada.github.io`). Supabase (free tier) for
   database, storage (bucket `media`) and login.
 - Folders by language: `/index.html`, `/html/` (other pages), `/css/style.css`, `/js/` (one
   file per feature), `/sql/setup.sql` (whole database; idempotent, safe to re-run), `404.html`.
 - JS: classic scripts (not modules), ES5-style `var`/`function` plus async/await where it
-  reads better. Everything shared hangs off `window.Moridaya` (`M`). All scripts are in
+  reads better. Everything shared hangs off `window.Moriyada` (`M`). All scripts are in
   `<head>` with `defer` (download in parallel, run in order after parsing), except
   `theme.js`, which runs immediately so the page never flashes the wrong theme. Order:
   vendor supabase -> config -> db -> render -> (lightbox, bento) -> ribbon -> page script.
@@ -103,6 +109,10 @@ README.md has the setup steps and the entry field reference; this file has the r
 
 ## Design
 
+- Site name: **Moriyada** everywhere (titles, header, meta, code: `window.Moriyada`,
+  `MORIYADA_CONFIG`, `moriyada-*` storage keys). The SQL files keep "Moridaya" in their
+  header comments on purpose: never edit already-run SQL files (it would only raise "do I
+  need to re-run this?"). theme.js still reads the old `moridaya-theme` key as a fallback.
 - Site subtitle is "a public diary & archive" (no name), and subtitles are not italic.
 - Old-internet look: white background, navy `#000080` headings and borders, default blue
   links `#0000ee`, purple visited. No gradients, no emoji, no modern "card" styling.
@@ -151,7 +161,10 @@ README.md has the setup steps and the entry field reference; this file has the r
   hidden on the public page. **Favorites are not daily posts**: they're managed on the
   favorites page itself, in a "Manage favorites" box that only appears for the logged-in
   owner (`js/favorites-manage.js`, checks `is_owner()`). The posting page is for daily
-  entries only and just links there.
+  entries only and just links there. **Edit**: the owner gets [edit] buttons on the public
+  list and in the manage box; editing fixes a favorite in place (name, why, since, until for
+  past ones, photo replace/remove) without creating history. "Set a new favorite" is what
+  moves the old one to "previously".
 - **Hobbies**: every tag with its count; `hobbies.html?tag=x` shows that tag's entries as a
   bento grid with dates (`showDate`). **Quotes**: every quote, newest first.
   **Bookshelf**: built from reading entries; same title (ignoring case) = one book;

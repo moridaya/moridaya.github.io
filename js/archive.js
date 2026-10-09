@@ -2,7 +2,7 @@
 // list of manga chapters. Today isn't here yet: it moves in at 12:00 AM Manila time.
 // Nothing is added by hand; the list comes straight from the entries table.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
 
   function pad(n, width) {

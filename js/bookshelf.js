@@ -2,7 +2,7 @@
 // are one book. A book is finished once any of its entries has "finished this book" ticked.
 // Pages logged = the highest page reached in each book, added up.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
   function short(d) { return M.formatDate(d, { weekday: undefined, month: 'short' }); }
 

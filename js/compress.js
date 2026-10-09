@@ -2,7 +2,7 @@
 // around 200-300 KB. Output is always JPEG. Re-drawing the image also drops the hidden
 // EXIF data phones attach, including GPS location.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
 
   var TARGET_BYTES = 300 * 1024;
   var MAX_SIDE = 1600;     // longest side in pixels; plenty for a diary column

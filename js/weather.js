@@ -1,6 +1,6 @@
 // Manila weather from Open-Meteo (free, no key). Shows the current weather in the header.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
 
   M.WEATHER_URL = 'https://api.open-meteo.com/v1/forecast' +
     '?latitude=14.5995&longitude=120.9842&timezone=Asia%2FManila' +
@@ -36,7 +36,7 @@
 
   M.saveTodayWeather = async function (client) {
     var today = M.manilaDate();
-    var KEY = 'moridaya-weather-saved';
+    var KEY = 'moriyada-weather-saved';
     try { if (localStorage.getItem(KEY) === today) return 'already saved'; } catch (e) { /* fine */ }
     var have = await M.withTimeout(client.from('day_weather').select('weather_date').eq('weather_date', today).maybeSingle(), 10000, 'weather check');
     if (have.error) throw have.error;

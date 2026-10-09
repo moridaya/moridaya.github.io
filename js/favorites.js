@@ -3,7 +3,7 @@
 // "previously: X, from [date] to [date]". Categories without a favorite are hidden.
 // Managed on this same page by the owner (js/favorites-manage.js).
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
   function short(d) { return M.formatDate(d, { weekday: undefined, month: 'short' }); }
 
@@ -24,6 +24,14 @@
     return b;
   }
 
+  // [edit] next to a favorite, only for the logged-in owner (js/favorites-manage.js).
+  function editButton(f) {
+    if (!M.favoritesOwner || !M.editFavorite) return null;
+    var b = el('button', { type: 'button', class: 'small fav-edit' }, ['edit']);
+    b.addEventListener('click', function () { M.editFavorite(f.id); });
+    return b;
+  }
+
   function render(out, data) {
     out.textContent = '';
     var shown = 0;
@@ -39,13 +47,13 @@
         current ? el('div', { class: 'fav-current' }, [
           photoButton(current),
           el('div', null, [
-            el('p', { class: 'fav-name' }, [current.name]),
+            el('p', { class: 'fav-name' }, [current.name, editButton(current)]),
             current.why ? el('p', { class: 'fav-why' }, ['“' + current.why + '”']) : null,
             el('p', { class: 'note' }, ['since ' + short(current.since)])
           ])
         ]) : el('p', { class: 'empty' }, ['No current favorite.']),
         past.length ? el('p', { class: 'note fav-past' }, ['previously: '].concat(past.map(function (f, i) {
-          return (i ? '; ' : '') + f.name + ', from ' + short(f.since) + ' to ' + short(f.until);
+          return el('span', null, [(i ? '; ' : '') + f.name + ', from ' + short(f.since) + ' to ' + short(f.until), editButton(f) ? ' ' : null, editButton(f)]);
         }))) : null
       ]));
     });

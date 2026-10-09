@@ -1,7 +1,7 @@
 // Hobbies: every tag, with how many entries use it. Clicking one (hobbies.html?tag=running)
 // shows every entry with that tag, newest first, as a bento grid with dates.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
 
   function say(out, text, cls) { out.textContent = ''; out.appendChild(el('p', { class: cls || 'empty' }, [text])); }
@@ -23,7 +23,7 @@
   }
 
   function oneTag(out, tag) {
-    document.title = tag + ' - Moridaya';
+    document.title = tag + ' - Moriyada';
     var head = el('h2', { class: 'section-head' }, [tag]);
     var back = el('p', { class: 'note' }, [el('a', { href: M.root() + 'html/hobbies.html' }, ['« all hobbies'])]);
     var grid = el('div', { id: 'bento' }, [el('p', { class: 'note' }, ['loading...'])]);

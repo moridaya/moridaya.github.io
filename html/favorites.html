@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: data: blob:; media-src 'self' https://*.supabase.co blob:; connect-src 'self' https://*.supabase.co https://api.open-meteo.com https://itunes.apple.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; object-src 'none'; worker-src 'none'; manifest-src 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>favorites - Moridaya</title>
+  <title>favorites - Moriyada</title>
   <link rel="preload" href="../fonts/old-standard-tt-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="../fonts/im-fell-english-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://uxjsqgeynszqhkzzwvhd.supabase.co" crossorigin>
@@ -30,7 +30,7 @@
     <div id="top-right">
       <button id="theme-toggle" type="button" aria-label="switch theme"></button>
     </div>
-    <h1><a href="../index.html">Moridaya</a></h1>
+    <h1><a href="../index.html">Moriyada</a></h1>
     <p class="subtitle">all-time favorites, and what they replaced</p>
   </header>
 
@@ -45,12 +45,13 @@
     <p class="note">Only you see this box. Changing a favorite keeps the old one as "previously".</p>
     <div id="fav-status" class="notice" role="status" aria-live="polite" hidden></div>
     <form id="fav-form" class="form">
+      <h3 id="fav-form-title" class="fav-form-title">Set a new favorite</h3>
       <div class="field">
         <label for="fav-cat">category</label>
         <select id="fav-cat"></select>
       </div>
       <div class="field">
-        <label for="fav-name">new favorite</label>
+        <label for="fav-name" id="fav-name-label">new favorite</label>
         <input type="text" id="fav-name" maxlength="200" autocomplete="off">
       </div>
       <div class="field">
@@ -61,12 +62,18 @@
         <label for="fav-since">my favorite since</label>
         <input type="date" id="fav-since">
       </div>
+      <div class="field" id="fav-until-field" hidden>
+        <label for="fav-until">until (when it stopped being the favorite)</label>
+        <input type="date" id="fav-until">
+      </div>
       <div class="field">
         <label for="fav-photo">photo (optional)</label>
         <input type="file" id="fav-photo" accept="image/*">
+        <div id="fav-photo-now" class="existing" hidden></div>
       </div>
       <p><button type="submit" id="fav-save">set favorite</button>
-        <span class="note">the current one moves to "previously"</span></p>
+        <button type="button" id="fav-cancel" hidden>cancel edit</button>
+        <span class="note" id="fav-hint">the current one moves to "previously"</span></p>
     </form>
     <div id="fav-list"><p class="note">loading...</p></div>
     <form id="fav-cat-form" class="form fav-cat-form">

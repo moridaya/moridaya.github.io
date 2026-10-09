@@ -6,12 +6,14 @@
 // The box only appears when this browser is logged in as the owner; the database rules
 // decide what's allowed either way.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
   function $(id) { return document.getElementById(id); }
   function short(d) { return M.formatDate(d, { weekday: undefined, month: 'short' }); }
   var wired = false;
   var data = { cats: [], favs: [] };
+  var editing = null;        // the favorite being edited, or null when setting a new one
+  var removePhoto = false;   // editing: drop the current photo
 
   function db() { return M.authClient(); }
 
@@ -94,6 +96,7 @@
         li.appendChild(el('div', { class: 'note' }, [
           f.until ? 'previously: ' : 'now: ', f.name,
           ' (' + short(f.since) + (f.until ? ' to ' + short(f.until) : ' onward') + ') ',
+          small('edit', function () { startEdit(f); }), ' ',
           small('delete', function () { deleteFavorite(f); })
         ]));
       });
@@ -102,9 +105,104 @@
     list.appendChild(ul);
   }
 
+  // ---- editing an existing favorite (fixes in place; no new history) ----
+
+  function startEdit(f) {
+    editing = f;
+    removePhoto = false;
+    clearStatus();
+    $('fav-form-title').textContent = 'Edit: ' + f.name;
+    $('fav-name-label').textContent = 'name';
+    $('fav-cat').value = String(f.category_id);
+    $('fav-cat').disabled = true;
+    $('fav-name').value = f.name;
+    $('fav-why').value = f.why || '';
+    $('fav-since').value = f.since;
+    $('fav-until-field').hidden = !f.until;
+    $('fav-until').value = f.until || '';
+    $('fav-photo').value = '';
+    var now = $('fav-photo-now');
+    now.textContent = '';
+    now.hidden = !f.photo;
+    if (f.photo) {
+      var rm = small('remove', function () { removePhoto = true; now.hidden = true; });
+      now.appendChild(el('img', { class: 'thumb', src: M.mediaUrl(f.photo), alt: 'current photo' }));
+      now.appendChild(document.createTextNode(' current photo (choosing a new one replaces it) '));
+      now.appendChild(rm);
+    }
+    $('fav-save').textContent = 'save changes';
+    $('fav-cancel').hidden = false;
+    $('fav-hint').hidden = true;
+    $('fav-manager').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function stopEdit() {
+    editing = null;
+    removePhoto = false;
+    $('fav-form-title').textContent = 'Set a new favorite';
+    $('fav-name-label').textContent = 'new favorite';
+    $('fav-cat').disabled = false;
+    $('fav-name').value = ''; $('fav-why').value = ''; $('fav-photo').value = '';
+    $('fav-since').value = M.manilaDate();
+    $('fav-until-field').hidden = true;
+    $('fav-until').value = '';
+    $('fav-photo-now').hidden = true;
+    $('fav-save').textContent = 'set favorite';
+    $('fav-cancel').hidden = true;
+    $('fav-hint').hidden = false;
+  }
+
+  async function saveEdit() {
+    var f = editing;
+    var name = $('fav-name').value.trim();
+    var why = $('fav-why').value.trim();
+    var since = $('fav-since').value;
+    var until = f.until ? $('fav-until').value : null;
+    var file = $('fav-photo').files && $('fav-photo').files[0];
+    if (!name) { status('The name can\'t be empty.', 'error'); return; }
+    if (!since) { status('Pick the "since" date.', 'error'); return; }
+    if (f.until && !until) { status('Pick the "until" date (only the current favorite has none).', 'error'); return; }
+    if (until && until < since) { status('"Until" can\'t be before "since".', 'error'); return; }
+    var btn = $('fav-save');
+    btn.disabled = true;
+    var uploaded = null;
+    try {
+      if (file) {
+        btn.textContent = 'photo...';
+        var blob = await M.compressImage(file, { maxSide: 600, targetBytes: 120 * 1024 });
+        uploaded = await upload(blob, storagePath(since, 'jpg'));
+      }
+      btn.textContent = 'saving...';
+      var changes = { name: name, why: why || null, since: since };
+      if (f.until) changes.until = until;
+      if (uploaded) changes.photo = uploaded;
+      else if (removePhoto) changes.photo = null;
+      var res = await M.withTimeout(db().from('favorites').update(changes).eq('id', f.id).select('id'), 15000, 'saving');
+      if (res.error) throw res.error;
+      if (!res.data || !res.data.length) throw new Error('row-level security: nothing was changed');
+      if (f.photo && (uploaded || removePhoto)) await removeFiles([f.photo]);   // old photo no longer used
+      stopEdit();
+      status('Changes saved.', 'ok');
+      changed();
+    } catch (err) {
+      if (uploaded) await removeFiles([uploaded]);
+      status('Not saved: ' + explain(err), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = editing ? 'save changes' : 'set favorite';
+    }
+  }
+
+  // The public list above calls this for its [edit] buttons.
+  M.editFavorite = function (id) {
+    var f = data.favs.filter(function (x) { return x.id === id; })[0];
+    if (f) startEdit(f);
+  };
+
   async function setFavorite(event) {
     event.preventDefault();
     clearStatus();
+    if (editing) { await saveEdit(); return; }
     var cat = Number($('fav-cat').value);
     var name = $('fav-name').value.trim();
     var why = $('fav-why').value.trim();
@@ -193,8 +291,11 @@
         wired = true;
         $('fav-form').addEventListener('submit', setFavorite);
         $('fav-cat-form').addEventListener('submit', addCategory);
+        $('fav-cancel').addEventListener('click', function () { stopEdit(); clearStatus(); });
       }
       if (!$('fav-since').value) $('fav-since').value = M.manilaDate();
+      M.favoritesOwner = true;            // the public list above shows [edit] buttons now
+      if (M.refreshFavorites) M.refreshFavorites();
       reload();
     }).catch(function () { /* not logged in or offline: just the public page */ });
   });

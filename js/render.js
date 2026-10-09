@@ -4,7 +4,7 @@
 // Text is always inserted as plain text, never as HTML, so nothing typed into an
 // entry can break the page or run code.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
 
   // el('p', {class: 'x'}, ['text', otherElement]) -> <p class="x">text...</p>
   function el(tag, attrs, kids) {

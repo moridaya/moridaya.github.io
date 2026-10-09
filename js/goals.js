@@ -1,6 +1,6 @@
 // Goals: every goal entry, sorted into active, done and dropped, with their dates.
 (function () {
-  var M = window.Moridaya = window.Moridaya || {};
+  var M = window.Moriyada = window.Moriyada || {};
   var el = function () { return M.el.apply(null, arguments); };
   function short(d) { return M.formatDate(d, { weekday: undefined, month: 'short' }); }
   function isDate(d) { return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d); }
