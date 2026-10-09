@@ -149,10 +149,12 @@ README.md has the setup steps and the entry field reference; this file has the r
   previous/next day; handles impossible, future and empty dates.
 - **Post** (`html/post.html`): login (+ optional 2-step), one form whose fields change by
   type, photo compression to ~300 KB JPEG (song covers ~600px/120 KB), edit/delete recent.
-- **Ribbon** (`js/ribbon.js`): `[home] [archive] [favorites] [hobbies] [bookshelf] [quotes]
-  [goals] [places] [about]`. Pages not built yet have no `ready: true` flag and show gray
-  "(soon)", not clickable. When you build a page, set its flag in the same PR. Only
-  [places] is still "soon". **Random day was dropped (he doesn't want it); don't build it.**
+- **Ribbon** (`js/ribbon.js`): home, archive, favorites, hobbies, bookshelf, quotes, goals,
+  places, about. **No brackets** (he disliked them): plain lowercase links, widely spaced
+  (flex, 30px gap), no underlines, thin rules above and below; the current page is bold navy
+  with a 2px underline, hover shows a soft underline. Pages not built yet have no
+  `ready: true` flag: faded, not clickable, with a tiny "SOON" tag. When you build a page,
+  set its flag in the same PR. Only places is still "soon". **Random day was dropped (he doesn't want it); don't build it.**
 - **Favorites** (`html/favorites.html`, tables in `sql/004_favorites.sql`): editable
   categories (seeded: philosopher, chess player, FlipTop emcee, food, song, book, movie,
   place, emotion, word). A favorite = name, optional photo (600px/120 KB), one-line why,
