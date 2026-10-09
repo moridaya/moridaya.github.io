@@ -160,7 +160,9 @@ README.md has the setup steps and the entry field reference; this file has the r
   place, emotion, word). A favorite = name, optional photo (600px/120 KB), one-line why,
   since date. The current one has empty `until`; `set_favorite()` closes the old one
   (until = new since) so history shows "previously: X, from A to B". Empty categories are
-  hidden on the public page. **Favorites are not daily posts**: they're managed on the
+  hidden on the public page. Photos show as a fixed 96px square thumbnail (center-cropped,
+  `object-fit: cover`, `flex: none` so long text can't squeeze it), like an Instagram grid;
+  tapping opens the whole uncropped photo. **Favorites are not daily posts**: they're managed on the
   favorites page itself, in a "Manage favorites" box that only appears for the logged-in
   owner (`js/favorites-manage.js`, checks `is_owner()`). The posting page is for daily
   entries only and just links there. **Edit**: the owner gets [edit] buttons on the public
